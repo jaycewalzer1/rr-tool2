@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Master Database</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            background-color: #f5f7fa;
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 240px;
+            background-color: #2b6cb0;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .sidebar a:hover {
+            text-decoration: underline;
+        }
+        .main {
+            flex-grow: 1;
+            padding: 40px;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        h2 {
+            margin-top: 0;
+        }
+        a.download-link {
+            color: #2b6cb0;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        a.download-link:hover {
+            text-decoration: underline;
+        }
+        ul.pdf-list {
+            padding-left: 20px;
+        }
+        ul.pdf-list li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>CRE: Dashboard</h2>
+        <a href="/dashboard">Home</a>
+        <a href="/dashboard/marketing">Marketing Materials</a>
+        <a href="/dashboard/database">Master Database</a>
+        <a href="/logout">Logout</a>
+    </div>
+    <div class="main">
+        <div class="card">
+            <h2>Your Master Database</h2>
+            {% if excel_file %}
+                <p>Your master Excel file has been generated:</p>
+                <a class="download-link" href="{{ url_for('download_master_excel', filename=excel_file) }}" target="_blank">{{ excel_file }}</a>
+                <hr>
+                <h3>Processed PDF Files:</h3>
+                {% if pdf_list %}
+                    <ul class="pdf-list">
+                        {% for pdf in pdf_list %}
+                            <li>{{ pdf }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No PDFs have been uploaded yet.</p>
+                {% endif %}
+            {% else %}
+                <p>No database has been generated yet. Please upload PDFs in Marketing Materials to begin.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
+
+
+
+
