@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRE: AI Solutions</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #fff;
+            color: #333;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 60px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        .logo {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1d1d1f;
+            cursor: pointer;
+        }
+        nav a {
+            margin-left: 30px;
+            text-decoration: none;
+            font-weight: 500;
+            color: #1d1d1f;
+        }
+        nav a.demo {
+            background-color: #2b6cb0;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 5px;
+        }
+        .hero {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            padding: 100px 60px;
+            background: #f5f7fa;
+        }
+        .hero-text {
+            max-width: 600px;
+        }
+        .hero-text h1 {
+            font-size: 44px;
+            color: #102a43;
+            margin-bottom: 20px;
+        }
+        .hero-text p {
+            font-size: 18px;
+            color: #4a4a4a;
+        }
+        .cta-button {
+            margin-top: 30px;
+            padding: 14px 28px;
+            background-color: #2b6cb0;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 5px;
+            font-size: 16px;
+        }
+        .hero img {
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .partnership {
+            background-color: #145c63;
+            padding: 80px 20px;
+            text-align: center;
+        }
+        .partnership h2 {
+            font-size: 28px;
+            margin-bottom: 40px;
+            color: white;
+        }
+        .partner-logos {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 60px;
+        }
+        .partner-logos img {
+            max-height: 100px;
+            max-width: 200px;
+            object-fit: contain;
+            filter: brightness(0) invert(1); /* optional white tint */
+        }
+
+        @media (max-width: 768px) {
+            .hero {
+                flex-direction: column;
+                padding: 60px 20px;
+                text-align: center;
+            }
+            .hero-text {
+                max-width: 100%;
+            }
+            .partner-logos {
+                gap: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" onclick="location.href='/'">CRE: AI Solutions</div>
+        <nav>
+            <a href="{{ url_for('platform') }}">Platform</a>
+            <a href="{{ url_for('solutions') }}">Solutions</a>
+            <a href="{{ url_for('company') }}">Company</a>
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('signup') }}">Request Demo</a>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="hero-text">
+            <h1>Centralize Data.<br>Make Decisions.<br>Close Deals.</h1>
+            <p>Welcome to the future of real estate investment.</p>
+        </div>
+    </section>
+
+    <section class="partnership">
+        <h2>Trusted by Industry Leaders</h2>
+        <div class="partner-logos">
+            <img src="{{ url_for('static', filename='EREC_SecondaryBlockLogo_Navy.gif') }}" alt="EREC Logo">
+            <img src="{{ url_for('static', filename='ColletLogo.png') }}" alt="Partner Logo 1">
+            <img src="{{ url_for('static', filename='PioneerLogo.png') }}" alt="Partner Logo 2">
+        </div>
+    </section>
+</body>
+</html>
+
+

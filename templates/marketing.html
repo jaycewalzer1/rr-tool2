@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Marketing Materials</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            background-color: #f5f7fa;
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 240px;
+            background-color: #2b6cb0;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .sidebar a:hover {
+            text-decoration: underline;
+        }
+        .main {
+            flex-grow: 1;
+            padding: 40px;
+            display: flex;
+            gap: 40px;
+        }
+        .upload-box, .list-box {
+            background: white;
+            padding: 24px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 450px;
+        }
+        .upload-box h2, .list-box h2 {
+            margin-top: 0;
+        }
+        input[type="file"] {
+            margin-top: 10px;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #2b6cb0;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1e4f87;
+        }
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        li a {
+            color: #2b6cb0;
+            text-decoration: none;
+        }
+        li a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>CRE: Dashboard</h2>
+        <a href="/dashboard">Home</a>
+        <a href="/dashboard/marketing">Marketing Materials</a>
+        <a href="/dashboard/database">Master Database</a>
+        <a href="/logout">Logout</a>
+    </div>
+    <div class="main">
+        <div class="upload-box">
+            <h2>Upload a PDF</h2>
+            <form method="POST" enctype="multipart/form-data">
+                <input type="file" name="pdf" accept="application/pdf" required>
+                <button type="submit">Upload</button>
+            </form>
+        </div>
+        <div class="list-box">
+            <h2>Your Uploaded PDFs</h2>
+            <ul>
+                {% for file in pdf_files %}
+                    <li><a href="{{ url_for('view_pdf', filename=file) }}" target="_blank">{{ file }}</a></li>
+                {% else %}
+                    <li>No PDFs uploaded yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
+
+
+
