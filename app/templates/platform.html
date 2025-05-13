@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Platform - CRE: AI Solutions</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+            color: #1d1d1f;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 60px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        .logo {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1d1d1f;
+        }
+        nav a {
+            margin-left: 30px;
+            text-decoration: none;
+            font-weight: 500;
+            color: #1d1d1f;
+        }
+        nav a.demo {
+            background-color: #2b6cb0;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 5px;
+        }
+        .section {
+            padding: 80px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .section h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .section p {
+            font-size: 18px;
+            max-width: 1000px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 0 40px;
+        }
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            margin-top: 40px;
+            justify-content: center;
+            padding: 0 40px;
+        }
+        .feature {
+            flex: 1 1 320px;
+            max-width: 360px;
+            background-color: #f9f9f9;
+            padding: 25px 20px;
+            border-radius: 8px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-start;
+            height: 260px;
+        }
+        .feature h3 {
+            margin: 0 0 12px 0;
+        }
+        .feature p {
+            margin: 0;
+            line-height: 1.5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+        .cta-button {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+        }
+        .cta-button button {
+            padding: 14px 28px;
+            background-color: #2b6cb0;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .shaded {
+            background-color: #145c63;
+            color: white;
+        }
+        .shaded p {
+            color: #e4f7f8;
+        }
+        @media (max-width: 768px) {
+            .section h2 {
+                font-size: 28px;
+            }
+            .section p {
+                font-size: 16px;
+            }
+            .features {
+                padding: 0 20px;
+            }
+            .feature {
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">CRE: AI Solutions</div>
+        <nav>
+            <a href="{{ url_for('platform') }}">Platform</a>
+            <a href="{{ url_for('solutions') }}">Solutions</a>
+            <a href="{{ url_for('company') }}">Company</a>
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('contact') }}" class="demo">Request Demo</a>
+        </nav>
+    </header>
+
+    <section class="section shaded">
+        <div class="container">
+            <h2>Centralized Deal Management</h2>
+            <p>Simplify and streamline your investment process by centralizing data, automating workflows, and generating actionable insights—all in one place.</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <h2>Data Management</h2>
+            <div class="features">
+                <div class="feature">
+                    <h3>AI-Powered Data Extraction</h3>
+                    <p>Automatically extract key information from documents to build a property database, track markets, or analyze competitive sets.</p>
+                </div>
+                <div class="feature">
+                    <h3>Centralized Database</h3>
+                    <p>Store all property, deal, and asset data in a single, structured repository for seamless access and reporting.</p>
+                </div>
+                <div class="feature">
+                    <h3>Deal Data Hub</h3>
+                    <p>Consolidate all deal information—including rents, lease terms, reimbursements, and financials—in one unified system.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <h2>Analytics & Reporting</h2>
+            <div class="features">
+                <div class="feature">
+                    <h3>Real-Time Pipeline Tracking</h3>
+                    <p>Track your deals from sourcing to closing with real-time updates and insights at every stage.</p>
+                </div>
+                <div class="feature">
+                    <h3>Custom Dashboards</h3>
+                    <p>Visualize key metrics and performance indicators with tailored, interactive dashboards.</p>
+                </div>
+                <div class="feature">
+                    <h3>Comparables Database</h3>
+                    <p>Leverage a proprietary comps database to inform underwriting and guide investment decisions.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <h2>Execution Workflows</h2>
+            <div class="features">
+                <div class="feature">
+                    <h3>Automated Workflows</h3>
+                    <p>Standardize repetitive tasks and reduce manual work with fully automated processes.</p>
+                </div>
+                <div class="feature">
+                    <h3>Collaboration Tools</h3>
+                    <p>Enable internal and external teams to collaborate efficiently with shared access and communication tools.</p>
+                </div>
+                <div class="feature">
+                    <h3>Document Management</h3>
+                    <p>Generate, store, and search critical documents using filters by market, product type, vintage, and more.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section shaded">
+        <div class="container">
+            <h2>Experience the Future of Real Estate Investment</h2>
+            <p>Discover how CRE: AI Solutions can transform the way you invest. Schedule a demo today to see the platform in action.</p>
+            <div class="cta-button">
+                <a href="{{ url_for('contact') }}">
+                    <button>Request Demo</button>
+                </a>
+            </div>
+        </div>
+    </section>
+</body>
+</html>
+
