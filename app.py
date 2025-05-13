@@ -1,7 +1,6 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify
 from forms import LoginForm, SignupForm, ResetPasswordForm, ConfirmForm
 from models import db, User, File
-import boto3
 import os
 from dotenv import load_dotenv
 import jwt
@@ -14,6 +13,8 @@ import hmac
 import six
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
+import shutil
+import tempfile
 
 def calculate_password_claim_signature(username, password, user_id_for_srp, srp_b, salt, secret_block, client_id):
     # Convert inputs to bytes
@@ -89,47 +90,67 @@ def solutions():
 def company():
     return render_template('404.html'), 404
 
-@app.route('/api/s3/upload-url', methods=['POST'])
-def get_upload_url():
+@app.route('/api/local/upload', methods=['POST'])
+def upload_file():
     if 'id_token' not in session or 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
 
-    data = request.get_json()
-    if not data or 'filename' not in data:
-        return jsonify({'error': 'Filename is required'}), 400
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
 
-    filename = data['filename']
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
     user_id = session['user_id']
-    s3_key = f"{user_id}/{filename}"
-    upload_url = generate_presigned_upload_url(s3_key)
+    upload_dir = os.path.join('uploads', user_id)
+    os.makedirs(upload_dir, exist_ok=True)
 
-    if not upload_url:
-        return jsonify({'error': 'Failed to generate upload URL'}), 500
+    file_path = os.path.join(upload_dir, file.filename)
+    file.save(file_path)
 
     return jsonify({
-        'upload_url': upload_url,
-        's3_key': s3_key
+        'success': True,
+        'file_path': file_path,
+        'filename': file.filename
     })
 
-@app.route('/api/s3/download-url', methods=['GET'])
-def get_download_url():
-    if 'id_token' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
-
-    s3_key = request.args.get('s3_key')
-    if not s3_key:
-        return jsonify({'error': 'S3 key is required'}), 400
-
-    download_url = generate_presigned_download_url(s3_key)
-    if not download_url:
-        return jsonify({'error': 'Failed to generate download URL'}), 500
-
-    return jsonify({'download_url': download_url})
-
-@app.route('/api/s3/delete', methods=['DELETE'])
-def delete_file():
+@app.route('/api/local/files', methods=['GET'])
+def get_files():
     if 'id_token' not in session or 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
+
+    user_id = session['user_id']
+    upload_dir = os.path.join('uploads', user_id)
+    
+    if not os.path.exists(upload_dir):
+        return jsonify({'files': []})
+
+    files = []
+    for filename in os.listdir(upload_dir):
+        file_path = os.path.join(upload_dir, filename)
+        if os.path.isfile(file_path):
+            files.append({
+                'filename': filename,
+                'size_bytes': os.path.getsize(file_path),
+                'upload_date': os.path.getctime(file_path)
+            })
+
+    return jsonify({'files': files})
+
+@app.route('/api/local/delete/<filename>', methods=['DELETE'])
+def delete_local_file(filename):
+    if 'id_token' not in session or 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    user_id = session['user_id']
+    file_path = os.path.join('uploads', user_id, filename)
+
+    if not os.path.exists(file_path):
+        return jsonify({'error': 'File not found'}), 404
+
+    os.remove(file_path)
+    return jsonify({'success': True})
 
     s3_key = request.json.get('s3_key')
     if not s3_key:
