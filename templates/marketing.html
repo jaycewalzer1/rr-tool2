@@ -198,7 +198,7 @@
         async function loadPDFs() {
             console.log('=== LOADING PDFS ===');
             try {
-                const response = await fetch('/api/s3/files');
+                const response = await fetch('/api/local/files');
                 console.log('=== PDFS RESPONSE ===');
                 console.log('Status:', response.status);
                 console.log('Response:', await response.text());
@@ -212,27 +212,27 @@
                 pdfList.innerHTML = '';
 
                 console.log('=== PDFS LOADED ===');
-                console.log('Number of files:', files.length);
-                console.log('Files:', files);
+                console.log('Number of files:', files.files.length);
+                console.log('Files:', files.files);
 
-                if (files.length === 0) {
+                if (files.files.length === 0) {
                     pdfList.innerHTML = '<p class="text-muted">No PDFs uploaded yet.</p>';
                     return;
                 }
 
-                files.forEach(file => {
+                files.files.forEach(file => {
                     const fileElement = document.createElement('div');
                     fileElement.className = 'pdf-item mb-2';
                     fileElement.innerHTML = `
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <strong>${file.filename}</strong>
-                                <small class="text-muted">Uploaded: ${new Date(file.upload_date).toLocaleString()}</small>
+                                <small class="text-muted">Uploaded: ${new Date(file.upload_date * 1000).toLocaleString()}</small>
                                 <small class="text-muted">Size: ${Math.round(file.size_bytes / 1024)} KB</small>
                             </div>
                             <div>
-                                <button class="btn btn-sm btn-primary me-2" onclick="viewPDF('${file.s3_key}')">View</button>
-                                <button class="btn btn-sm btn-danger" onclick="deletePDF('${file.s3_key}')">Delete</button>
+                                <button class="btn btn-sm btn-primary me-2" onclick="viewPDF('${file.filename}')">View</button>
+                                <button class="btn btn-sm btn-danger" onclick="deletePDF('${file.filename}')">Delete</button>
                             </div>
                         </div>
                     `;
@@ -247,42 +247,42 @@
         }
 
         // Function to view PDF
-        async function viewPDF(s3Key) {
+        async function viewPDF(filename) {
             try {
-                const response = await fetch(`/api/s3/download-url?s3_key=${s3Key}`);
-                if (!response.ok) {
-                    throw new Error('Failed to get download URL');
-                }
-
-                const data = await response.json();
-                window.open(data.download_url, '_blank');
+                // For local files, we'll just create a URL to the file
+                const user_id = document.getElementById('user_id').value;
+                const filePath = `/uploads/${user_id}/${filename}`;
+                
+                // Open the PDF in a new tab
+                window.open(filePath, '_blank');
             } catch (error) {
+                console.error('Error viewing PDF:', error);
                 alert('Error viewing PDF: ' + error.message);
             }
         }
 
         // Function to delete PDF
-        async function deletePDF(s3Key) {
+        async function deletePDF(filename) {
             if (!confirm('Are you sure you want to delete this PDF?')) {
                 return;
             }
 
             try {
-                const response = await fetch('/api/s3/delete', {
+                const response = await fetch(`/api/local/delete/${encodeURIComponent(filename)}`, {
                     method: 'DELETE',
                     headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ s3_key: s3Key })
+                        'Content-Type': 'application/json',
+                    }
                 });
 
                 if (!response.ok) {
                     throw new Error('Failed to delete PDF');
                 }
 
+                alert('PDF deleted successfully');
                 loadPDFs();
-                alert('PDF deleted successfully!');
             } catch (error) {
+                console.error('Error deleting PDF:', error);
                 alert('Error deleting PDF: ' + error.message);
             }
         }
