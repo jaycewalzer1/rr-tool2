@@ -32,14 +32,16 @@
         .main {
             flex-grow: 1;
             padding: 40px;
+            overflow-y: auto;
         }
         .card {
             background: white;
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
         }
-        h2 {
+        h2, h3 {
             margin-top: 0;
         }
         a.download-link {
@@ -56,6 +58,26 @@
         ul.pdf-list li {
             margin: 5px 0;
         }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            background: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+            font-size: 14px;
+        }
+        th {
+            background-color: #2b6cb0;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 <body>
@@ -66,12 +88,37 @@
         <a href="/dashboard/database">Master Database</a>
         <a href="/logout">Logout</a>
     </div>
+
     <div class="main">
         <div class="card">
             <h2>Your Master Database</h2>
+
             {% if excel_file %}
                 <p>Your master Excel file has been generated:</p>
                 <a class="download-link" href="{{ url_for('download_master_excel', filename=excel_file) }}" target="_blank">{{ excel_file }}</a>
+
+                {% if headers and rows %}
+                    <h3>Preview</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                {% for header in headers %}
+                                    <th>{{ header }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in rows %}
+                                <tr>
+                                    {% for cell in row %}
+                                        <td>{{ cell }}</td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% endif %}
+
                 <hr>
                 <h3>Processed PDF Files:</h3>
                 {% if pdf_list %}
@@ -90,7 +137,3 @@
     </div>
 </body>
 </html>
-
-
-
-

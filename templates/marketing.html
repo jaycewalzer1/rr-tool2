@@ -85,17 +85,26 @@
     <div class="main">
         <div class="upload-box">
             <h2>Upload a PDF</h2>
-            <form id="uploadForm" enctype="multipart/form-data">
+            <form action="/dashboard/marketing/upload" method="post" enctype="multipart/form-data">
                 <input type="file" name="pdf" accept="application/pdf" required>
-                <button type="submit">Upload</button>
+                <button type="submit">Upload and Process</button>
             </form>
-        </div>
+        </div>        
         <div class="list-box">
             <h2>Your Uploaded PDFs</h2>
-            <div id="pdfList"></div>
+            <ul>
+                {% for filename in uploaded_files %}
+                <li>
+                    <a href="{{ url_for('serve_uploaded_pdf', filename=filename) }}" target="_blank">{{ filename }}</a>
+                </li>
+                {% else %}
+                <li>No PDFs uploaded yet.</li>
+                {% endfor %}
+            </ul>
         </div>
     </div>
 
+    <!---
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Load user's PDFs when page loads
@@ -288,5 +297,7 @@
         }
     });
     </script>
+    -->
+
 </body>
 </html>

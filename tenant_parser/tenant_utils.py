@@ -1,8 +1,17 @@
 from tenant_parser.constants import popular_tenants, anchor_tenants
 import re
 from tenant_parser.logger import logger
-from tenant_parser.tenant_logic import *
-
+from tenant_parser.shared_extractors import (
+    extract_refined_square_feet,
+    extract_psf_candidates,
+    extract_date_objects,
+    extract_tenant_name,
+    determine_lease_begin_date,
+    determine_lease_end_date,
+    calculate_annual_rent,
+    detect_and_split_tenants
+)
+from tenant_parser.tenant_logic import process_line_for_tenant
 def categorize_tenants_from_data_sheet(data_sheet, pdf_name, anchor_tenants, popular_tenants):
     """
     Scans an Excel data sheet for tenants associated with a specific PDF name.
