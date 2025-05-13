@@ -125,13 +125,12 @@
 </head>
 <body>
     <header>
-        <div class="logo">CRE: AI Solutions</div>
+        <div class="logo" onclick="location.href='/'">CRE: AI Solutions</div>
         <nav>
             <a href="{{ url_for('platform') }}">Platform</a>
             <a href="{{ url_for('solutions') }}">Solutions</a>
-            <a href="{{ url_for('company') }}">Company</a>
             <a href="{{ url_for('login') }}">Login</a>
-            <a href="{{ url_for('contact') }}" class="demo">Request Demo</a>
+            <a href="{{ url_for('signup') }}">Sign Up</a>
         </nav>
     </header>
 
@@ -206,11 +205,6 @@
         <div class="container">
             <h2>Experience the Future of Real Estate Investment</h2>
             <p>Discover how CRE: AI Solutions can transform the way you invest. Schedule a demo today to see the platform in action.</p>
-            <div class="cta-button">
-                <a href="{{ url_for('contact') }}">
-                    <button>Request Demo</button>
-                </a>
-            </div>
         </div>
     </section>
 </body>
