@@ -1,4 +1,5 @@
 import re
+import pandas as pd
 
 def extract_addresses(text, pdf_file, csv_data):
     """Extract addresses, fallback to city/state if no address is found, and validate using CSV."""
@@ -16,6 +17,25 @@ def extract_addresses(text, pdf_file, csv_data):
     """
 
     addresses = []
+
+    if isinstance(csv_data, list):
+        if not csv_data:  # Empty list
+            # Create an empty DataFrame with required columns
+            csv_data = pd.DataFrame(columns=['Zip Code', 'City', 'State Name', 'State Abbreviation'])
+        else:
+            # Convert list of dictionaries to DataFrame
+            csv_data = pd.DataFrame(csv_data)
+    else:
+        # Already a DataFrame or similar
+        csv_data = csv_data
+    
+    # Ensure all required columns exist
+    required_columns = ['State Abbreviation', 'City', 'State Name', 'Zip Code']
+    for col in required_columns:
+        if col not in csv_data.columns:
+            csv_data[col] = ""
+
+
     # Ensure all values in 'State Abbreviation' are strings
     csv_data['State Abbreviation'] = csv_data['State Abbreviation'].fillna("").astype(str)
     patterns = [

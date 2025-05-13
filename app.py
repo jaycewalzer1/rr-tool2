@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify
+from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify, send_file, send_from_directory
 from forms import LoginForm, SignupForm, ResetPasswordForm, ConfirmForm
 from models import db, User, File
 import os
@@ -15,6 +15,11 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 import shutil
 import tempfile
+from sqlalchemy import inspect
+from tenant_parser.exporter import export_rent_roll_data_with_ocr
+from werkzeug.utils import secure_filename
+from openpyxl import load_workbook
+
 
 def calculate_password_claim_signature(username, password, user_id_for_srp, srp_b, salt, secret_block, client_id):
     # Convert inputs to bytes
@@ -46,6 +51,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 
+UPLOAD_FOLDER = 'uploaded_pdfs'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 @app.route('/')
@@ -71,12 +78,82 @@ def dashboard():
 @app.route('/dashboard/marketing')
 @login_required
 def marketing():
-    return render_template('marketing.html')
+    user_files = os.listdir(UPLOAD_FOLDER)
+    uploaded_files = [f for f in user_files if f.endswith('.pdf')]
+    return render_template('marketing.html', uploaded_files=uploaded_files)
+
+
+@app.route('/dashboard/marketing/upload', methods=['POST'])
+@login_required
+def upload_rent_roll():
+    if 'pdf' not in request.files:
+        flash('No file uploaded.', 'danger')
+        return redirect(url_for('marketing'))
+
+    file = request.files['pdf']
+    if file.filename == '':
+        flash('No file selected.', 'danger')
+        return redirect(url_for('marketing'))
+
+    filename = secure_filename(file.filename)
+    user_email = session.get('user_id', 'anonymous')  # or use user's email if stored
+
+    # Save PDF locally
+    pdf_path = os.path.join(UPLOAD_FOLDER, filename)
+    file.save(pdf_path)
+
+    # Run processing pipeline
+    try:
+        output_path = export_rent_roll_data_with_ocr(user_email, pdf_path)
+        if not output_path or not os.path.exists(output_path):
+            flash("Failed to process PDF.", 'danger')
+            return redirect(url_for('marketing'))
+
+        # Optional: Let user download Excel
+        return send_file(output_path, as_attachment=True)
+
+    except Exception as e:
+        print(f"Error processing upload: {e}")
+        flash("Error processing file.", 'danger')
+        return redirect(url_for('marketing'))
+
+@app.route('/uploads/<filename>')
+@login_required
+def serve_uploaded_pdf(filename):
+    return send_from_directory('uploaded_pdfs', filename)
+
 
 @app.route('/dashboard/database')
 @login_required
 def database():
-    return render_template('database.html')
+    user_email = session.get('user_id', 'anonymous')
+    safe_user = secure_filename(user_email)
+    excel_file = f"{safe_user}_master_database.xlsx"
+    excel_path = os.path.join("master_database", excel_file)
+
+    rows = []
+    headers = []
+    if os.path.exists(excel_path):
+        wb = load_workbook(excel_path)
+        sheet = wb["Retail Tenants"]
+        for i, row in enumerate(sheet.iter_rows(values_only=True)):
+            if i == 0:
+                headers = row
+            else:
+                rows.append(row)
+
+    pdf_list = [f for f in os.listdir("uploaded_pdfs") if f.endswith(".pdf")]
+
+    return render_template("database.html",
+                           excel_file=excel_file if os.path.exists(excel_path) else None,
+                           headers=headers,
+                           rows=rows,
+                           pdf_list=pdf_list)
+
+@app.route('/download/master/<filename>')
+@login_required
+def download_master_excel(filename):
+    return send_from_directory("master_database", filename, as_attachment=True)
 
 @app.route('/platform')
 def platform():
@@ -466,13 +543,15 @@ if __name__ == '__main__':
     with app.app_context():
         # Create all tables
         db.create_all()
+
+        inspector = inspect(db.engine)
         
         # Check if tables exist
-        if not db.engine.dialect.has_table(db.engine, 'user'):
+        if not inspector.has_table('user'):
             print("Creating user table...")
             db.create_all()
         
-        if not db.engine.dialect.has_table(db.engine, 'file'):
+        if not inspector.has_table('file'):
             print("Creating file table...")
             db.create_all()
     

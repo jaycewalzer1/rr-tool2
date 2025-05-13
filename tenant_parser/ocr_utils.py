@@ -1,6 +1,6 @@
 from PIL import Image, ImageEnhance, ImageFilter
 import pytesseract
-from optimized_ocr_processor import process_pdf_with_ocr
+from tenant_parser.optimized_ocr_processor import process_pdf_with_ocr
 from tenant_parser.logger import logger
 import os
 
@@ -21,25 +21,39 @@ def locate_rent_roll_sections(pdf_path):
     Scans each page in the PDF to identify rent roll sections using optimized OCR.
     """
     try:
-        rent_roll_pages = []
+        rent_roll_pages = set()
         processed_pages = process_pdf_with_ocr(pdf_path)
-        
+
+        # Expanded keyword list to catch more variations
+        keywords = [
+            "rent roll", "tenant list", "lease summary", "space occupancy",
+            "retail tenants", "anchor tenants", "tenant roster", "lease matrix",
+            "lease schedule", "tenancy schedule", "occupancy chart"
+        ]
+
         for page in processed_pages:
-            page_text = page['text'].lower()
-            # Look for common rent roll indicators
-            if any(keyword in page_text for keyword in [
-                "rent roll", "tenant list", "lease summary", "space occupancy"
-            ]):
-                rent_roll_pages.append(page['page_num'])
-                logger.info(f"Rent Roll-like section detected on page {page['page_num']} in {os.path.basename(pdf_path)}")
-        
-        # Remove duplicates and sort
-        rent_roll_pages = sorted(set(rent_roll_pages))
-        return rent_roll_pages
-        
+            page_text = page.get('text', '').lower()
+            page_num = page.get('page_num')
+
+            # Line-by-line match increases robustness
+            for line in page_text.splitlines():
+                if any(keyword in line for keyword in keywords):
+                    rent_roll_pages.add(page_num)
+                    logger.info(
+                        f"Rent Roll-like section detected on page {page_num} in {os.path.basename(pdf_path)}"
+                    )
+                    break  # Avoid double-logging the same page
+
+        if not rent_roll_pages:
+            logger.info(f"No rent roll-like sections found in {os.path.basename(pdf_path)}")
+
+        return sorted(rent_roll_pages)
+
     except Exception as e:
         logger.error(f"Error locating rent roll sections in {pdf_path}: {str(e)}")
         return []
+
+
 
 ### Is this function used anywhere?
 def split_line_into_columns(line, max_columns=58):
