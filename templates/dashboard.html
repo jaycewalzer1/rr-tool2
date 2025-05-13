@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard - CRE: AI Solutions</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            background-color: #f7f9fb;
+        }
+        .sidebar {
+            width: 240px;
+            background-color: #2b6cb0;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .sidebar h2 {
+            font-size: 20px;
+            margin-bottom: 30px;
+        }
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .sidebar a:hover {
+            text-decoration: underline;
+        }
+        .main {
+            flex-grow: 1;
+            padding: 40px;
+        }
+        .section-header {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .content-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>CRE: Dashboard</h2>
+        <a href="/dashboard">Home</a>
+        <a href="/dashboard/marketing">Marketing Materials</a>
+        <a href="/dashboard/database">Master Database</a>
+        <a href="/logout">Logout</a>
+    </div>
+    <div class="main">
+        <div class="section-header">Welcome to Your Dashboard</div>
+        <div class="content-box">
+            <p>This is where your dashboard content will go. Select a section on the left to get started.</p>
+        </div>
+    </div>
+</body>
+</html>
