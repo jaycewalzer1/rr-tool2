@@ -1,2 +1,6 @@
 .env
 __pycache__
+.env.test
+pytest.ini
+.pytest_cache
+test_auth
