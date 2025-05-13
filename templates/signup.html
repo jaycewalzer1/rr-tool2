@@ -5,9 +5,30 @@ l<!DOCTYPE html>
     <title>Sign Up - CRE: AI Solutions</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
+        .flash-message {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .flash-message.error {
+            background-color: #f44336;
+            color: white;
+        }
+        .flash-message.success {
+            background-color: #8bc34a;
+            color: white;
+        }
+        .flash-message.info {
+            background-color: #03a9f4;
+            color: white;
+        }
+        .flash-message.danger {
+            background-color: #f44336;
+            color: white;
+        }
         body {
             font-family: 'Inter', sans-serif;
-            margin: 0;
+            margin: 0;  
             background-color: #f5f7fa;
             display: flex;
             justify-content: center;
@@ -70,6 +91,15 @@ l<!DOCTYPE html>
 </head>
 <body>
     <div class="signup-box">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-message {{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 {% for message in messages %}
@@ -82,12 +112,33 @@ l<!DOCTYPE html>
         <form method="POST" action="{{ url_for('signup') }}">
             {{ form.hidden_tag() }}
             <div class="form-group">
+                {{ form.name.label }}
+                {{ form.name(class="form-input") }}
+                {% if form.name.errors %}
+                    <div class="error-message">
+                        {% for error in form.name.errors %}
+                            <small>{{ error }}</small><br>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group">
                 {{ form.username.label }}
                 {{ form.username(class="form-input") }}
+                {% if form.username.errors %}
+                    <div class="error-message">
+                        {% for error in form.username.errors %}
+                            <small>{{ error }}</small><br>
+                        {% endfor %}
+                    </div>
+                {% endif %}
             </div>
             <div class="form-group">
                 {{ form.email.label }}
                 {{ form.email(class="form-input") }}
+            </div>
+            <div class="form-group">
+                {{ form.phone_number(class="form-input", placeholder="+12345678901", pattern="^\+\d{10,15}$", title="Enter phone number in format +12345678901") }}
             </div>
             <div class="form-group">
                 {{ form.password.label }}
@@ -98,7 +149,7 @@ l<!DOCTYPE html>
                 {{ form.confirm_password(class="form-input") }}
             </div>
             {{ form.submit(class="cta-button") }}
-        </form>
+        </form>        
         <div class="footer-link">
             <p>Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
         </div>

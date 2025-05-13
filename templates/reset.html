@@ -47,10 +47,32 @@
         button:hover {
             background-color: #1e4f87;
         }
+        .flash-message {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .flash-message.error {
+            background-color: #f44336;
+            color: white;
+        }
+        .flash-message.success {
+            background-color: #8bc34a;
+            color: white;
+        }
     </style>
 </head>
 <body>
-    <div class="box">
+    <div class="reset-box">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-message {{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
         <h2>Reset Your Password</h2>
         <form method="POST">
             <input type="email" name="email" placeholder="Enter your email" required>

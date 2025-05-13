@@ -5,6 +5,27 @@
     <title>Login - CRE: AI Solutions</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
+        .flash-message {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .flash-message.error {
+            background-color: #f44336;
+            color: white;
+        }
+        .flash-message.success {
+            background-color: #8bc34a;
+            color: white;
+        }
+        .flash-message.info {
+            background-color: #03a9f4;
+            color: white;
+        }
+        .flash-message.danger {
+            background-color: #f44336;
+            color: white;
+        }
         body {
             font-family: 'Inter', sans-serif;
             margin: 0;
@@ -26,7 +47,7 @@
             margin-bottom: 24px;
             font-weight: 600;
         }
-        input[type="email"], input[type="password"] {
+        .form-input {
             width: 100%;
             padding: 12px;
             margin: 10px 0 20px;
@@ -34,7 +55,7 @@
             border-radius: 6px;
             font-size: 16px;
         }
-        button {
+        .cta-button {
             width: 100%;
             padding: 12px;
             background-color: #2b6cb0;
@@ -44,7 +65,7 @@
             font-size: 16px;
             cursor: pointer;
         }
-        button:hover {
+        .cta-button:hover {
             background-color: #1e4f87;
         }
         .error-message {
@@ -70,6 +91,13 @@
 </head>
 <body>
     <div class="login-box">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 {% for message in messages %}
@@ -78,15 +106,32 @@
             {% endif %}
         {% endwith %}
         
-        <h2>Login to CRE: AI Solutions</h2>
-        <form method="POST" action="{{ url_for('login') }}">
-            <input type="email" name="email" id="email" placeholder="Email Address" required>
-            <input type="password" name="password" id="password" placeholder="Password" required>
-            <button type="submit">Log In</button>
+        <h2>{% if show_confirmation %}Confirm Account{% else %}Log In{% endif %}</h2>
+        {% if show_confirmation %}
+        <form method="POST" action="{{ url_for('confirm_signup') }}">
+            <div class="form-group">
+                <label for="confirmation_code">Confirmation Code</label>
+                <input type="text" id="confirmation_code" name="confirmation_code" class="form-input" required>
+                <p class="form-text">Check your phone for the confirmation code that was sent via SMS.</p>
+            </div>
+            <button type="submit" class="cta-button">Confirm Account</button>
         </form>
+        {% else %}
+        <form method="POST" action="{{ url_for('login') }}">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{ form.username.label }}
+                {{ form.username(class="form-input") }}
+            </div>
+            <div class="form-group">
+                {{ form.password.label }}
+                {{ form.password(class="form-input") }}
+            </div>
+            {{ form.submit(class="cta-button") }}
+        </form>
+        {% endif %}
         <div class="footer-link">
-            <p>Forgot your password? <a href="{{ url_for('reset') }}">Reset it</a></p>
-            <p>Don’t have an account? <a href="{{ url_for('signup') }}">Sign up</a></p>
+            <p>Don't have an account? <a href="{{ url_for('signup') }}">Sign up</a></p>
         </div>
     </div>
 </body>
