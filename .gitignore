@@ -4,3 +4,4 @@ __pycache__
 pytest.ini
 .pytest_cache
 test_auth
+*instance
