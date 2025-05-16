@@ -1,0 +1,46 @@
+{% extends "account.html" %}
+
+{% block title %}Confirm Account - CRE: AI Solutions{% endblock %}
+
+{% block account_content %}
+    <div class="account-wrapper">
+        <div class="account-header">
+            <h1>Confirm Your Account</h1>
+            <p>Enter the confirmation code sent to your email address.</p>
+        </div>
+
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{ form.confirmation_code(class="form-input", placeholder="Confirmation Code") }}
+                {% if form.confirmation_code.errors %}
+                    <div class="error-message">
+                        {% for error in form.confirmation_code.errors %}
+                            <small>{{ error }}</small><br>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            {{ form.submit(class="cta-button") }}
+            <div class="form-text">
+                <button type="button" class="cta-button resend-button" data-username="{{ session['pending_confirmation_username'] }}">Resend Code</button>
+            </div>
+        </form>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script src="{{ url_for('static', filename='js/account.js') }}"></script>
+{% endblock %}

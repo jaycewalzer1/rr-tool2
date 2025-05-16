@@ -38,8 +38,8 @@ boto3.setup_default_session(
 
 cognito = boto3.client('cognito-idp')
 
-def get_secret_hash(username):
-    msg = username + COGNITO_APP_CLIENT_ID
+def get_secret_hash(username, client_id):
+    msg = username + client_id
     dig = hmac.new(COGNITO_APP_CLIENT_SECRET.encode('utf-8'), 
                    msg = msg.encode('utf-8'),
                    digestmod=hashlib.sha256).digest()
@@ -48,16 +48,18 @@ def get_secret_hash(username):
 
 def authenticate(username, password):
     try:
+        # Get secret hash with client_id
+        secret_hash = get_secret_hash(username, COGNITO_APP_CLIENT_ID)
+        
         resp = cognito.initiate_auth(
             ClientId=COGNITO_APP_CLIENT_ID,
             AuthFlow='USER_PASSWORD_AUTH',
             AuthParameters={
                 'USERNAME': username, 
                 'PASSWORD': password,
-                'SECRET_HASH': get_secret_hash(username)
+                'SECRET_HASH': secret_hash
             }
         )
-        session['id_token'] = resp['AuthenticationResult']['IdToken']
         return True, resp['AuthenticationResult']
     except cognito.exceptions.NotAuthorizedException:
         return False, None
