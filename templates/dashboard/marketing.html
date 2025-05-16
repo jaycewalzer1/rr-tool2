@@ -1,101 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marketing Materials - CRE: AI Solutions</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            display: flex;
-            height: 100vh;
-            background-color: #f7f9fb;
-        }
-        .sidebar {
-            width: 240px;
-            background-color: #2b6cb0;
-            color: white;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .sidebar h2 {
-            font-size: 20px;
-            margin-bottom: 30px;
-        }
-        .sidebar a {
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        .sidebar a:hover {
-            text-decoration: underline;
-        }
-        .main {
-            flex-grow: 1;
-            padding: 40px;
-        }
-        .section-header {
-            font-size: 28px;
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
-        .content-box {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        }
-        .upload-box {
-            margin-bottom: 30px;
-        }
-        .list-box {
-            margin-top: 30px;
-        }
-        .list-box h2 {
-            margin-bottom: 20px;
-        }
-        ul {
-            list-style: none;
-            padding: 0;
-        }
-        li {
-            margin-bottom: 10px;
-        }
-        li a {
-            color: #2b6cb0;
-            text-decoration: none;
-        }
-        li a:hover {
-            text-decoration: underline;
-        }
-    </style>
-</head>
-<body>
-    <div class="sidebar">
-        <h2>CRE: Dashboard</h2>
-        <a href="/dashboard">Home</a>
-        <a href="/dashboard/marketing">Marketing Materials</a>
-        <a href="/dashboard/database">Master Database</a>
-        <a href="/logout">Logout</a>
-    </div>
+{% extends "dashboard_wrapper.html" %}
+
+{% block dashboard_title %}Marketing Materials - CRE: AI Solutions{% endblock %}
+
+{% block dashboard_content %}
     <div class="main">
+        <div class="section-header">Marketing Materials</div>
         <div class="upload-box">
-            <h2>Upload a PDF</h2>
+            <h3>Upload PDF</h3>
             <form id="uploadForm" enctype="multipart/form-data">
-                <input type="file" name="pdf" accept="application/pdf" required>
-                <button type="submit">Upload</button>
+                <div class="form-group">
+                    <input type="file" name="pdf" accept="application/pdf" required class="form-input">
+                </div>
+                <button type="submit" class="cta-button">Upload</button>
             </form>
         </div>
         <div class="list-box">
-            <h2>Your Uploaded PDFs</h2>
-            <div id="pdfList"></div>
+            <h3>Your PDFs</h3>
+            <div id="pdfList">
+                <!-- PDFs will be listed here -->
+            </div>
         </div>
     </div>
+{% endblock %}
 
+{% block extra_scripts %}
+    <script src="{{ url_for('static', filename='js/marketing.js') }}"></script>
+{% endblock %}
+
+{% block scripts %}
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Load user's PDFs when page loads
@@ -288,5 +220,4 @@
         }
     });
     </script>
-</body>
-</html>
+{% endblock %}

@@ -1,0 +1,39 @@
+/* Form Styles */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid var(--gray-light);
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 0 2px transparent;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--lilac);
+    box-shadow: 0 0 0 2px var(--lilac);
+}
+
+h2 {
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-weight: 800;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-color: var(--lilac);
+    margin-bottom: 1.5rem;
+}
+
+.form-text a {
+    color: var(--lilac);
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.form-text a:hover {
+    text-decoration: underline;
+}

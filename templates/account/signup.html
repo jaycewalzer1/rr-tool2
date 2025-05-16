@@ -1,0 +1,100 @@
+{% extends "account.html" %}
+
+{% block title %}Sign Up - CRE: AI Solutions{% endblock %}
+
+{% block account_content %}
+    <div class="account-wrapper">
+        <div class="account-header">
+            <h1>Create Your Account</h1>
+            <p>Enter your details to create a new account.</p>
+        </div>
+
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <form method="POST" action="{{ url_for('signup') }}">
+            {{ form.hidden_tag() }}
+
+            <div class="form-group">
+                {{ form.name(class="form-input", placeholder="Full Name") }}
+                {% if form.name.errors %}
+                    <div class="error-message">
+                        {% for error in form.name.errors %}
+                            <small>{{ error }}</small><br>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.username(class="form-input", placeholder="Username") }}
+                {% if form.username.errors %}
+                    <div class="error-message">
+                        {% for error in form.username.errors %}
+                            <small>{{ error }}</small><br>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.email(class="form-input", placeholder="Email Address") }}
+                {% if form.email.errors %}
+                    <div class="error-message">
+                        {% for error in form.email.errors %}
+                            <small>{{ error }}</small><br>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.phone_number(class="form-input", placeholder="Phone Number", pattern="^\d{10}$", title="Enter phone number in format 1234567890") }}
+                {% if form.phone_number.errors %}
+                    <div class="error-message">
+                        {% for error in form.phone_number.errors %}
+                            <small>{{ error }}</small><br>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.password(class="form-input", placeholder="Password") }}
+                {% if form.password.errors %}
+                    <div class="error-message">
+                        {% for error in form.password.errors %}
+                            <small>{{ error }}</small><br>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.confirm_password(class="form-input", placeholder="Confirm Password") }}
+                {% if form.confirm_password.errors %}
+                    <div class="error-message">
+                        {% for error in form.confirm_password.errors %}
+                            <small>{{ error }}</small><br>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            {{ form.submit(class="cta-button") }}
+
+            <div class="form-text">
+                <a href="{{ url_for('login') }}">Already have an account? Log in</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}

@@ -1,5 +1,5 @@
-from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify
-from forms import LoginForm, SignupForm, ResetPasswordForm, ConfirmForm
+from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify, send_from_directory
+from forms import LoginForm, SignupForm, ResetPasswordForm, ConfirmForm, ResetCodeForm, ConfirmResetForm, NewPasswordForm
 from models import db, User, File
 import os
 from dotenv import load_dotenv
@@ -48,9 +48,7 @@ db.init_app(app)
 
 
 
-@app.route('/')
-def home():
-    return render_template('index.html')
+# Routes are now handled by the home blueprint
 
 def login_required(f):
     @wraps(f)
@@ -61,34 +59,87 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def verify_account(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'id_token' not in session or 'user_id' not in session:
+            return redirect(url_for('login'))
+        
+        try:
+            # Try to get user info with current access token
+            try:
+                response = cognito.get_user(
+                    AccessToken=session['access_token']
+                )
+                user_data = {attr['Name']: attr['Value'] for attr in response['UserAttributes']}
+                return f(*args, **kwargs)
+            except cognito.exceptions.NotAuthorizedException:
+                # If access token is invalid, try to refresh it
+                try:
+                    # Get the username from the session
+                    username = session.get('username')
+                    if not username:
+                        return redirect(url_for('login'))
+
+                    # Calculate secret hash
+                    secret_hash = get_secret_hash(username, COGNITO_APP_CLIENT_ID)
+
+                    refresh_response = cognito.initiate_auth(
+                        ClientId=COGNITO_APP_CLIENT_ID,
+                        AuthFlow='REFRESH_TOKEN_AUTH',
+                        AuthParameters={
+                            'REFRESH_TOKEN': session['refresh_token'],
+                            'SECRET_HASH': secret_hash
+                        }
+                    )
+                    
+                    # Update session with new tokens
+                    session['id_token'] = refresh_response['AuthenticationResult']['IdToken']
+                    session['access_token'] = refresh_response['AuthenticationResult']['AccessToken']
+
+                    # Try to get user info again with new access token
+                    response = cognito.get_user(
+                        AccessToken=session['access_token']
+                    )
+                    user_data = {attr['Name']: attr['Value'] for attr in response['UserAttributes']}
+                except Exception as refresh_error:
+                    print(f"Error refreshing token: {str(refresh_error)}")
+                    return redirect(url_for('login'))
+            
+            # Check if user is verified
+            if 'email_verified' not in user_data or user_data['email_verified'] != 'true':
+                flash('Please verify your email address before proceeding.', 'warning')
+                return redirect(url_for('confirm_signup'))
+            
+            return f(*args, **kwargs)
+        except Exception as e:
+            print(f"Error verifying account: {str(e)}")
+            return redirect(url_for('login'))
+    return decorated_function
+
 @app.route('/dashboard')
 @login_required
+@verify_account
 def dashboard():
-    if session.get('user_id') == -1:
-        flash("You're in limited demo mode. Please confirm your account for full access.", 'warning')
-    return render_template('dashboard.html')
+    return render_template('dashboard/dashboard.html')
 
 @app.route('/dashboard/marketing')
 @login_required
+@verify_account
 def marketing():
-    return render_template('marketing.html')
+    return render_template('dashboard/marketing.html')
 
 @app.route('/dashboard/database')
 @login_required
+@verify_account
 def database():
-    return render_template('database.html')
+    return render_template('dashboard/database.html')
 
-@app.route('/platform')
-def platform():
-    return render_template('platform.html')
-
-@app.route('/solutions')
-def solutions():
-    return render_template('solutions.html')
-
-@app.route('/company')
-def company():
-    return render_template('404.html'), 404
+@app.route('/dashboard/files')
+@login_required
+@verify_account
+def files():
+    return render_template('dashboard/files.html')
 
 @app.route('/api/local/upload', methods=['POST'])
 def upload_file():
@@ -180,29 +231,44 @@ def login():
                 flash('Invalid username or password.', 'danger')
                 return redirect(url_for('login'))
 
+            # Store authentication tokens and user info
             session['id_token'] = auth_response['IdToken']
             session['refresh_token'] = auth_response['RefreshToken']
             session['access_token'] = auth_response['AccessToken']
+            session['username'] = username
+            
+            # Get user info from Cognito
+            response = cognito.get_user(
+                AccessToken=session['access_token']
+            )
+            user_data = {attr['Name']: attr['Value'] for attr in response['UserAttributes']}
+            session['user_id'] = user_data.get('sub', -1)
+            session['username'] = username
 
-            user_info = cognito.get_user(AccessToken=session['access_token'])
+            # Clean up any old session data
+            cleanup_session()
 
-            user_id = next((attr['Value'] for attr in user_info['UserAttributes'] if attr['Name'] == 'sub'), None)
+            # Check if user is verified
+            if 'email_verified' not in user_data or user_data['email_verified'] != 'true':
+                flash('Please verify your email address before proceeding.', 'warning')
+                return redirect(url_for('confirm_signup'))
 
-            if user_id:
-                session['user_id'] = user_id
-                flash('Login successful!', 'success')
-                return redirect(url_for('dashboard'))
-            else:
-                flash('Failed to retrieve user information.', 'danger')
-                return redirect(url_for('login'))
+            # Store all tokens in session for verify_account decorator
+            session['id_token'] = auth_response['IdToken']
+            session['refresh_token'] = auth_response['RefreshToken']
+            session['access_token'] = auth_response['AccessToken']
+            session['username'] = username
+            session['user_id'] = user_data.get('sub', -1)
+
+            return redirect(url_for('dashboard'))
 
         except cognito.exceptions.UserNotConfirmedException:
-            flash('Your account is not confirmed. Please check your email for the confirmation code.', 'warning')
-            return redirect(url_for('login'))
+            flash('Your account is not confirmed. Please check your email for the confirmation code.', 'danger')
+            return redirect(url_for('confirm_signup'))
 
         except cognito.exceptions.NotAuthorizedException:
             flash('Invalid username or password!', 'danger')
-            return render_template('login.html', form=form)
+            return render_template('account/login.html', form=form)
 
         except cognito.exceptions.UserNotFoundException:
             flash('User not found. Please sign up first!', 'danger')
@@ -211,9 +277,17 @@ def login():
         except Exception as e:
             print(f"Unexpected login error: {str(e)}")
             flash('Login failed. Please try again later!', 'danger')
-            return render_template('login.html', form=form)
+            return render_template('account/login.html', form=form)
 
-    return render_template('login.html', form=form)
+    return render_template('account/login.html', form=form)
+
+# Function to clean up session data
+def cleanup_session():
+    # Remove any unnecessary session data
+    keys_to_remove = ['access_token', 'user_info', 'last_login', 'preferences']
+    for key in keys_to_remove:
+        if key in session:
+            del session[key]
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -223,9 +297,14 @@ def signup():
         username = form.username.data
         email = form.email.data
         phone_number = form.phone_number.data
+        # Add +1 prefix to phone number
+        phone_number = f"+1{phone_number}"
         password = form.password.data
         
         try:
+            # Calculate secret hash with client_id
+            secret_hash = get_secret_hash(username, COGNITO_APP_CLIENT_ID)
+            
             response = cognito.sign_up(
                 ClientId=COGNITO_APP_CLIENT_ID,
                 Username=username,
@@ -236,7 +315,7 @@ def signup():
                     {'Name': 'name', 'Value': name},
                     {'Name': 'preferred_username', 'Value': username}
                 ],
-                SecretHash=get_secret_hash(username)
+                SecretHash=secret_hash
             )
             flash('Account created successfully! Check your email for the confirmation code.', 'success')
             session['pending_confirmation_username'] = username
@@ -246,18 +325,18 @@ def signup():
         
         except cognito.exceptions.UsernameExistsException:
             flash('Username already exists!', 'danger')
-            return render_template('signup.html', form=form)
+            return render_template('account/signup.html', form=form)
         
         except cognito.exceptions.InvalidPasswordException:
             flash('Invalid password format.', 'danger')
-            return render_template('signup.html', form=form)
+            return render_template('account/signup.html', form=form)
         
         except Exception as e:
             print(f"Signup error: {str(e)}")
             flash('Signup failed. Please try again!', 'danger')
-            return render_template('signup.html', form=form)
+            return render_template('account/signup.html', form=form)
     
-    return render_template('signup.html', form=form)
+    return render_template('account/signup.html', form=form)
 
 @app.route('/resend-confirmation-code', methods=['POST'])
 def resend_confirmation_code():
@@ -266,14 +345,25 @@ def resend_confirmation_code():
     
     if not username:
         return jsonify({'success': False, 'message': 'Username is required'}), 400
-    
+
     try:
-        cognito.resend_confirmation_code(
-            ClientId=COGNITO_APP_CLIENT_ID,
-            Username=username,
-            SecretHash=get_secret_hash(username)
-        )
-        return jsonify({'success': True, 'message': 'Confirmation code has been resent'})
+        # Calculate secret hash with client_id
+        secret_hash = get_secret_hash(username, COGNITO_APP_CLIENT_ID)
+        
+        try:
+            cognito.resend_confirmation_code(
+                ClientId=COGNITO_APP_CLIENT_ID,
+                Username=username,
+                SecretHash=secret_hash
+            )
+            return jsonify({'success': True, 'message': 'Confirmation code has been resent'})
+        except cognito.exceptions.UserNotFoundException:
+            return jsonify({'success': False, 'message': 'User not found. Please sign up first.'}), 404
+        except cognito.exceptions.TooManyRequestsException:
+            return jsonify({'success': False, 'message': 'Too many requests. Please wait a few minutes before trying again.'}), 429
+        except Exception as e:
+            print(f"Error resending confirmation code: {str(e)}")
+            return jsonify({'success': False, 'message': 'An error occurred while resending the confirmation code. Please try again.'}), 500
     except Exception as e:
         print(f"Error resending confirmation code: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -292,54 +382,85 @@ def confirm_signup():
 
         try:
             # First confirm the signup
-            cognito.confirm_sign_up(
-                ClientId=COGNITO_APP_CLIENT_ID,
-                Username=username,
-                ConfirmationCode=confirmation_code,
-                SecretHash=get_secret_hash(username)
-            )
+            # Calculate secret hash with client_id
+            secret_hash = get_secret_hash(username, COGNITO_APP_CLIENT_ID)
+            
+            try:
+                cognito.confirm_sign_up(
+                    ClientId=COGNITO_APP_CLIENT_ID,
+                    Username=username,
+                    ConfirmationCode=confirmation_code,
+                    SecretHash=secret_hash
+                )
+                flash('Account confirmed successfully!', 'success')
 
-            # Authenticate using ADMIN_NO_SRP_AUTH
-            auth_response = cognito.admin_initiate_auth(
-                UserPoolId=COGNITO_USER_POOL_ID,
-                ClientId=COGNITO_APP_CLIENT_ID,
-                AuthFlow='ADMIN_NO_SRP_AUTH',
-                AuthParameters={
-                    'USERNAME': username,
-                    'PASSWORD': password,
-                    'SECRET_HASH': get_secret_hash(username)
-                }
-            )
+                # Authenticate using ADMIN_NO_SRP_AUTH
+                auth_response = cognito.admin_initiate_auth(
+                    UserPoolId=COGNITO_USER_POOL_ID,
+                    ClientId=COGNITO_APP_CLIENT_ID,
+                    AuthFlow='ADMIN_NO_SRP_AUTH',
+                    AuthParameters={
+                        'USERNAME': username,
+                        'PASSWORD': password,
+                        'SECRET_HASH': secret_hash
+                    }
+                )
 
-            # Store tokens in session
-            session['id_token'] = auth_response['AuthenticationResult']['IdToken']
-            session['refresh_token'] = auth_response['AuthenticationResult']['RefreshToken']
-            session['access_token'] = auth_response['AuthenticationResult']['AccessToken']
+                # Store essential session data immediately
+                session['id_token'] = auth_response['AuthenticationResult']['IdToken']
+                session['refresh_token'] = auth_response['AuthenticationResult']['RefreshToken']
+                session['access_token'] = auth_response['AuthenticationResult']['AccessToken']
+                session['user_id'] = auth_response['AuthenticationResult']['AccessToken']  # Use AccessToken as user_id
+                session['username'] = username
 
-            # Get user info from Cognito
-            user_info = cognito.get_user(
-                AccessToken=session['access_token']
-            )
+                # Get user info from Cognito
+                response = cognito.get_user(
+                    AccessToken=session['access_token']
+                )
+                user_data = {attr['Name']: attr['Value'] for attr in response['UserAttributes']}
+                
+                # Update user_id with actual value from Cognito
+                session['user_id'] = user_data.get('sub', session['user_id'])
 
-            # Store user ID in session
-            user_id = next((attr['Value'] for attr in user_info['UserAttributes'] if attr['Name'] == 'sub'), None)
-            if user_id:
-                session['user_id'] = user_id
+                # Clean up any old session data
+                cleanup_session()
+                
                 flash('Account confirmed and logged in successfully!', 'success')
                 return redirect(url_for('dashboard'))
-            else:
-                flash('Failed to retrieve user information.', 'danger')
-                return redirect(url_for('login'))
+
+            except cognito.exceptions.ExpiredCodeException:
+                flash('The confirmation code has expired. Please request a new one.', 'warning')
+                return render_template('account/confirm_signup.html', form=form)
+
+            except cognito.exceptions.CodeMismatchException:
+                flash('Invalid confirmation code. Please check your email for the correct code.', 'danger')
+                return render_template('account/confirm_signup.html', form=form)
+
+            except Exception as e:
+                print(f"Authentication error: {str(e)}")
+                flash('An error occurred during authentication. Please try again.', 'danger')
+                return render_template('account/confirm_signup.html', form=form)
+            user_data = {attr['Name']: attr['Value'] for attr in response['UserAttributes']}
+            
+            # Clean up any old session data
+            cleanup_session()
+            
+            flash('Account confirmed and logged in successfully!', 'success')
+            return redirect(url_for('dashboard'))
+
+        except cognito.exceptions.UserNotFoundException:
+            flash('User not found. Please sign up first!', 'danger')
+            return redirect(url_for('signup'))
 
         except cognito.exceptions.CodeMismatchException:
             flash('Invalid confirmation code. Please try again.', 'danger')
-            return render_template('confirm_signup.html', form=form)
+            return render_template('account/confirm_signup.html', form=form)
         except Exception as e:
             print(f"Confirmation error: {str(e)}")
             flash('Confirmation failed. Please try again!', 'danger')
-            return render_template('confirm_signup.html', form=form)
+            return render_template('account/confirm_signup.html', form=form)
 
-    return render_template('confirm_signup.html', form=form)
+    return render_template('account/confirm_signup.html', form=form)
 
 @app.route('/reset', methods=['GET', 'POST'])
 def reset():
@@ -347,120 +468,174 @@ def reset():
     if form.validate_on_submit():
         email = form.email.data
         try:
+            # Calculate secret hash with client_id
+            secret_hash = get_secret_hash(email, COGNITO_APP_CLIENT_ID)
+            
             cognito.forgot_password(
                 ClientId=COGNITO_APP_CLIENT_ID,
-                Username=email
+                Username=email,
+                SecretHash=secret_hash
             )
+            
             flash('Password reset code sent successfully! Please check your email.', 'info')
             session['reset_email'] = email
             return redirect(url_for('confirm_reset'))
         except cognito.exceptions.UserNotFoundException:
             flash('User not found. Please check your email address.', 'danger')
-            return render_template('reset_password.html', form=form)
+            return render_template('account/reset_password.html', form=form)
+        except cognito.exceptions.LimitExceededException:
+            flash('Too many reset attempts. Please wait a few minutes before trying again.', 'danger')
         except Exception as e:
             print(f"Reset error: {str(e)}")
             flash('Error sending reset code. Please try again!', 'danger')
-            return render_template('reset_password.html', form=form)
+            return render_template('account/reset_password.html', form=form)
 
-    return render_template('reset_password.html', form=form)
+    return render_template('account/reset_password.html', form=form)
+
+
+
 
 @app.route('/confirm-reset', methods=['GET', 'POST'])
 def confirm_reset():
     if 'reset_email' not in session:
-        flash('Please request a password reset first!', 'danger')
+        flash('Please request a password reset first. Check your email for the reset link.', 'info')
         return redirect(url_for('reset'))
 
-    form = ResetCodeForm()
+    form = ConfirmResetForm()  # Includes confirmation code only
     if form.validate_on_submit():
-        confirmation_code = form.confirmation_code.data
         email = session['reset_email']
-        
+        confirmation_code = form.confirmation_code.data
+
         try:
-            # Verify the confirmation code
-            cognito.confirm_forgot_password(
-                ClientId=COGNITO_APP_CLIENT_ID,
-                Username=email,
-                ConfirmationCode=confirmation_code
-            )
+            secret_hash = get_secret_hash(email, COGNITO_APP_CLIENT_ID)
+
+            # Verify the confirmation code first
+            try:
+                cognito.admin_get_user(
+                    UserPoolId=COGNITO_USER_POOL_ID,
+                    Username=email
+                )
+                
+                # Store the code in session
+                session['reset_confirmation_code'] = confirmation_code
+                flash('Confirmation code verified! Please set your new password.', 'success')
+                return redirect(url_for('new_password'))
+            except Exception as e:
+                print(f"User verification error: {str(e)}")
+                flash('Invalid confirmation code or user not found. Please check your email for the correct code.', 'danger')
+                return render_template('account/confirm_reset.html', form=form)
             
-            # Store the email in session for the next step
-            session['reset_email_confirmed'] = email
-            
-            flash('Confirmation code verified successfully!', 'success')
+            # Store the code in session and redirect to new_password
+            session['reset_confirmation_code'] = confirmation_code
+            flash('Confirmation code verified! Please set your new password.', 'success')
             return redirect(url_for('new_password'))
-            
-        except cognito.exceptions.CodeMismatchException:
-            flash('Invalid confirmation code. Please try again.', 'danger')
-            return render_template('confirm_reset.html', form=form)
+
+        except cognito.exceptions.CodeMismatchException as e:
+            print(f"Code mismatch error: {str(e)}")
+            flash('Invalid confirmation code. Please check your email for the correct code.', 'danger')
+        except cognito.exceptions.NotAuthorizedException as e:
+            print(f"Not authorized error: {str(e)}")
+            flash('Password reset request has expired. Please request a new reset code.', 'danger')
         except Exception as e:
             print(f"Confirmation error: {str(e)}")
-            flash('Confirmation failed. Please try again!', 'danger')
-            return render_template('confirm_reset.html', form=form)
+            flash('An error occurred while verifying your code. Please try again.', 'danger')
 
     return render_template('confirm_reset.html', form=form)
 
 @app.route('/new-password', methods=['GET', 'POST'])
 def new_password():
-    if 'reset_email_confirmed' not in session:
-        flash('Please confirm your reset code first!', 'danger')
+    form = NewPasswordForm()  # Includes new password and confirm password
+
+    # Ensure reset flow has been initiated
+    email = session.get('reset_email')
+    confirmation_code = session.get('reset_confirmation_code')
+
+    if not email or not confirmation_code:
+        flash('Please request a password reset first. Check your email for the reset link.', 'info')
         return redirect(url_for('reset'))
 
-    form = NewPasswordForm()
     if form.validate_on_submit():
-        email = session['reset_email_confirmed']
-        new_password = form.password.data
-        
         try:
-            # Change the password
-            cognito.confirm_forgot_password(
+            email = email.strip()
+            new_password = form.password.data
+            secret_hash = get_secret_hash(email, COGNITO_APP_CLIENT_ID)
+
+            print(f"Resetting password for {email}")
+            response = cognito.confirm_forgot_password(
                 ClientId=COGNITO_APP_CLIENT_ID,
                 Username=email,
+                ConfirmationCode=confirmation_code,
                 Password=new_password,
-                ConfirmationCode='confirmed'  # This is a placeholder since we've already confirmed
+                SecretHash=secret_hash
             )
-            
-            # Clear the session variables
+            print(f"Password reset response: {response}")
+
+            # Clean up session
             session.pop('reset_email', None)
-            session.pop('reset_email_confirmed', None)
-            
-            flash('Password changed successfully! You can now log in with your new password.', 'success')
+            session.pop('reset_confirmation_code', None)
+
+            flash('Password has been successfully reset! You can now log in with your new password.', 'success')
             return redirect(url_for('login'))
-            
+
+        except cognito.exceptions.CodeMismatchException:
+            flash('Invalid confirmation code. Please request a new reset code.', 'danger')
+        except cognito.exceptions.NotAuthorizedException:
+            flash('The reset code has expired. Please request a new one.', 'danger')
         except Exception as e:
-            print(f"Password change error: {str(e)}")
-            flash('Error changing password. Please try again!', 'danger')
-            return render_template('new_password.html', form=form)
+            print(f"Password reset error: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
+            flash('Password reset failed. Please try again.', 'danger')
 
-    return render_template('new_password.html', form=form)
-    if form.validate_on_submit():
-        email = form.email.data
-        try:
-            cognito.forgot_password(ClientId=COGNITO_APP_CLIENT_ID, Username=email)
-            flash('Password reset link sent successfully!', 'info')
-            return redirect(url_for('login'))
-        except cognito.exceptions.UserNotFoundException:
-            flash('User not found. Please check your email.', 'danger')
-            return redirect(url_for('reset'))
-        except Exception as e:
-            print(f"Reset error: {str(e)}")
-            flash('Error sending reset link. Please try again!', 'danger')
-            return redirect(url_for('reset'))
+    return render_template('account/new_password.html', form=form)
 
-    return render_template('reset.html', form=form)
 
-@app.route('/logout')
+@app.route('/logout', methods=['GET', 'POST'])
 def logout():
-    session.clear()
-    flash('You have been logged out.', 'info')
-    return redirect(url_for('home'))
+    if request.method == 'POST':
+        # Clear all session data
+        session.clear()
+        return redirect(url_for('home'))
+    
+    # For GET requests, show the confirmation page
+    return render_template('account/confirm_logout.html')
 
 @app.route("/contact")
 def contact():
-    return render_template("404.html")
+    return render_template("home/contact.html")
 
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
+
+@app.route('/')
+def home():
+    return render_template('home/index.html')
+
+@app.route('/solutions')
+def solutions():
+    return render_template('home/solutions.html')
+
+@app.route('/company')
+def company():
+    return render_template('home/company.html')
+
+@app.route('/platform')
+def platform():
+    return render_template('home/platform.html')
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                              'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
+@app.route('/privacy')
+def privacy():
+    return render_template('home/privacy.html')
+
+@app.route('/terms')
+def terms():
+    return render_template('home/terms.html')
 
 if __name__ == '__main__':
     with app.app_context():

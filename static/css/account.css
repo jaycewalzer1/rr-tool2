@@ -1,0 +1,169 @@
+/* Layout */
+.account-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    background: var(--white);
+}
+
+.account-wrapper {
+    width: 100%;
+    max-width: 700px;
+    padding: 2rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    border-radius: var(--radius-xl);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: var(--glass-shadow);
+}
+
+/* Header */
+.account-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.account-header h1 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--black);
+    margin-bottom: 0.5rem;
+}
+
+.account-header p {
+    font-size: 0.95rem;
+    color: var(--gray-dark);
+}
+
+/* Form */
+.form-group {
+    margin-bottom: .5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--black);
+    font-weight: 500;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--gray-light);
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    background: var(--white-light);
+    transition: all 0.3s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--lilac);
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.1);
+}
+
+.cta-button {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: var(--lilac);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius-lg);
+    font-weight: 500;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.cta-button:hover {
+    background-color: var(--lilac-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.cta-button:disabled {
+    background-color: #a0aec0;
+    cursor: not-allowed;
+}
+
+/* Flash Messages */
+.flash-messages {
+    margin-bottom: 1.5rem;
+}
+
+.flash-message {
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    border-left: 4px solid currentColor;
+}
+
+.flash-message.success {
+    background-color: #dcfce7;
+    color: #166534;
+    border-color: #16a34a;
+}
+
+.flash-message.error {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border-color: #dc2626;
+}
+
+.error-message {
+    color: var(--error);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Navigation Text */
+.form-text {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.form-text a {
+    color: var(--lilac);
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.form-text a:hover {
+    color: var(--lilac-dark);
+    text-decoration: underline;
+    text-decoration-thickness: 0.5px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .account-wrapper {
+        padding: 1.5rem;
+    }
+
+    .form-input {
+        padding: 1rem;
+        font-size: 1rem;
+    }
+
+    .cta-button {
+        font-size: 1.05rem;
+        padding: 1rem;
+    }
+
+    .form-text {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}

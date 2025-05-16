@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="page-container">
+        <header>
+            <nav>
+                <div class="logo">
+                    <a class="headerlink logo-link" href="{{ url_for('home') }}">CRE Data Solutions</a>
+                </div>
+                <div class="nav-right">
+                    <a class="headerlink" href="{{ url_for('platform') }}">Platform</a>
+                    <a class="headerlink" href="{{ url_for('solutions') }}">Solutions</a>
+                    <a class="headerlink" href="{{ url_for('login') }}">Login</a>
+                    <a class="headerlink" href="{{ url_for('signup') }}">Sign Up</a>
+                </div>
+            </nav>
+        </header>
+
+        <main>
+            {% block styles %}
+            <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+            <link rel="stylesheet" href="{{ url_for('static', filename='css/forms.css') }}">
+            {% endblock %}
+
+            {% block main_content %}{% endblock %}
+        </main>
+
+        {% block footer %}
+        <footer>
+            <div class="footer-link">
+                <a class="footerlink" href="{{ url_for('contact') }}">Contact Us</a>
+                <a class="footerlink" href="{{ url_for('privacy') }}">Privacy Policy</a>
+                <a class="footerlink" href="{{ url_for('terms') }}">Terms of Service</a>
+            </div>
+        </footer>
+        {% endblock %}
+    </div>
+{% endblock %}
