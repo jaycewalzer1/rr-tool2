@@ -34,9 +34,10 @@
     <div class="dashboard-wrapper">
         <div class="sidebar">
             <h2>CRE: Dashboard</h2>
-            <a href="{{ url_for('dashboard') }}">Home</a>
-            <a href="{{ url_for('marketing') }}">File Uploader</a>
-            <a href="{{ url_for('database') }}">Results Viewer</a>
+            <a href="{{ url_for('dashboard.files') }}">File Uploader</a>
+            <a href="{{ url_for('dashboard.database') }}">Results Viewer</a>
+            <a href="{{ url_for('dashboard.subscription') }}">Subscription</a>
+            <a href="{{ url_for('dashboard.gmaps') }}">Map</a>
             <a href="#" onclick="confirmLogout()">Logout</a>
         </div>
         <div class="main">

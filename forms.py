@@ -1,16 +1,33 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, EmailField, SubmitField, PasswordField
-from wtforms.validators import DataRequired, Email, EqualTo, Length, Regexp
+from wtforms.validators import DataRequired, Email, EqualTo, Length, Regexp, ValidationError
 import re
 
 def validate_cognito_password(form, field):
     password = field.data
+    
     # Check length
     if len(password) < 8:
         raise ValidationError('Password must be at least 8 characters long')
+    
+    # Check for uppercase letter
+    if not re.search(r'[A-Z]', password):
+        raise ValidationError('Password must contain at least one uppercase letter')
+    
+    # Check for lowercase letter
+    if not re.search(r'[a-z]', password):
+        raise ValidationError('Password must contain at least one lowercase letter')
+    
+    # Check for number
+    if not re.search(r'[0-9]', password):
+        raise ValidationError('Password must contain at least one number')
+    
+    # Check for special character
+    if not re.search(r'[!@#$%^&*()\-_=+{};:,<.>]', password):
+        raise ValidationError('Password must contain at least one special character')
 
 class LoginForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired()])
+    email = EmailField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
 
@@ -34,8 +51,8 @@ class SignupForm(FlaskForm):
     ])
     
     password = PasswordField('Password', validators=[
-        DataRequired(), 
-        Length(min=8, message='Password must be at least 8 characters long'),
+        DataRequired(),
+        validate_cognito_password
     ])
     
     confirm_password = PasswordField('Confirm Password', validators=[
