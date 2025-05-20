@@ -112,7 +112,7 @@ def upload_rent_roll():
 
         if not os.path.exists(excel_path):
             flash("Failed to process PDF.", 'danger')
-            return redirect(url_for('marketing'))
+        return redirect(url_for('marketing'))
 
     except Exception as e:
         print(f"Error processing upload: {e}")
@@ -558,4 +558,4 @@ if __name__ == '__main__':
             print("Creating file table...")
             db.create_all()
     
-    app.run()
+    app.run(host="0.0.0.0", port=8080, debug=True)
