@@ -30,7 +30,7 @@ class SignupForm(FlaskForm):
     
     phone_number = StringField('Phone Number', validators=[
         DataRequired(),
-        Regexp(r'^\+\d{10,15}$', message="Phone number must be in the format +12345678901")
+        Regexp(r'^\d{10}$', message="Phone number must be 10 digits")
     ])
     
     password = PasswordField('Password', validators=[
@@ -60,8 +60,15 @@ class ResetCodeForm(FlaskForm):
     submit = SubmitField('Confirm Reset')
 
 class ResetPasswordForm(FlaskForm):
-    email = EmailField('Email', validators=[DataRequired(), Email()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
     submit = SubmitField('Send Reset Code')
+
+class ConfirmResetForm(FlaskForm):
+    confirmation_code = StringField('Confirmation Code', validators=[
+        DataRequired(),
+        Length(min=6, max=6, message='Confirmation code must be 6 digits')
+    ])
+    submit = SubmitField('Verify Code')
 
 class NewPasswordForm(FlaskForm):
     password = PasswordField('New Password', validators=[

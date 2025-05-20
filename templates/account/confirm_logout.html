@@ -1,0 +1,20 @@
+{% extends "account.html" %}
+
+{% block title %}Confirm Logout - CRE: AI Solutions{% endblock %}
+
+{% block account_content %}
+    <div class="account-wrapper">
+        <div class="account-header">
+            <h1>Confirm Logout</h1>
+            <p>Are you sure you want to log out?</p>
+        </div>
+
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="button-group">
+                {{ form.confirm(class="cta-button") }}
+                <a href="{{ url_for('dashboard') }}" class="cta-button cancel">Cancel</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}
