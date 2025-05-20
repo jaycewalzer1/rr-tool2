@@ -102,20 +102,23 @@ def upload_rent_roll():
     pdf_path = os.path.join(UPLOAD_FOLDER, filename)
     file.save(pdf_path)
 
+    # Construct Excel path
+    safe_user = secure_filename(user_email)
+    excel_path = os.path.join("master_database", f"{safe_user}_master_database.xlsx")
+
     # Run processing pipeline
     try:
-        output_path = export_rent_roll_data_with_ocr(user_email, pdf_path)
-        if not output_path or not os.path.exists(output_path):
+        export_rent_roll_data_with_ocr(pdf_path, excel_path, generate_summary=True)
+
+        if not os.path.exists(excel_path):
             flash("Failed to process PDF.", 'danger')
             return redirect(url_for('marketing'))
-
-        # Optional: Let user download Excel
-        return send_file(output_path, as_attachment=True)
 
     except Exception as e:
         print(f"Error processing upload: {e}")
         flash("Error processing file.", 'danger')
         return redirect(url_for('marketing'))
+
 
 @app.route('/uploads/<filename>')
 @login_required
