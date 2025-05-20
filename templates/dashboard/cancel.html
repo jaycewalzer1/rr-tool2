@@ -1,0 +1,18 @@
+{% extends "home/base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="text-center">
+                <i class="fas fa-times-circle text-danger fa-5x mb-4"></i>
+                <h2 class="mb-4">Payment Cancelled</h2>
+                <p class="lead">Your payment was cancelled. You can try again later or contact support if you need assistance.</p>
+                <a href="{{ url_for('dashboard_bp.dashboard') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>Go to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
