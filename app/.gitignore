@@ -1,0 +1,14 @@
+.DS_Store
+app/.DS_Store
+__pycache__/
+app/__pycache__/
+*.log
+app/master_database/
+app/marketing_oms/
+app/database1.log
+app/app.py
+app/config.py
+app/direct_extraction.py
+app/processor.py
+app/process_pdf.py
+app/tenant_parser/

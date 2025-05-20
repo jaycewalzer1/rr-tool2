@@ -50,11 +50,7 @@ def process_line_for_tenant(entry, pdf_name, city, state, zip_code, address, mon
     tenant_data[tenant_name]["option_number"] += 1  # Increment option for future entries
     # Extract square footage and other data
     square_feet = extract_refined_square_feet(parts)
-    date_parts = [
-        p for p in parts
-        if '/' in p or any(mon in p.lower() for mon in months_map)
-    ]
-    date_candidates, found_current = extract_date_objects(date_parts, months_map)
+    date_candidates, found_current = extract_date_objects(parts, months_map)
     earliest_date = determine_lease_begin_date(date_candidates, found_current, parts)
     begin_date_obj = None
     if earliest_date and earliest_date != "Current":
