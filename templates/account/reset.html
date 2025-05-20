@@ -1,0 +1,35 @@
+{% extends "account.html" %}
+
+{% block title %}Reset Password - CRE: AI Solutions{% endblock %}
+
+{% block account_content %}
+    <div class="account-wrapper">
+        <div class="account-header">
+            <h1>Reset Your Password</h1>
+            <p>Enter your email address to receive a reset link.</p>
+        </div>
+
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <form method="POST">
+            <div class="form-group">
+                <input type="email" name="email" id="email" class="form-input" placeholder="Email Address" required>
+            </div>
+            <button type="submit" class="cta-button">Send Reset Link</button>
+        </form>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script src="{{ url_for('static', filename='js/account.js') }}"></script>
+{% endblock %}

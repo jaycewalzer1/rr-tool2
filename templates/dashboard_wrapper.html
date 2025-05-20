@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}{% block dashboard_title %}Dashboard - CRE: AI Solutions{% endblock %}{% endblock %}
+
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block extra_scripts %}
+    <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script>
+        function confirmLogout() {
+            if (confirm('Are you sure you want to log out?')) {
+                fetch('/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({})
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '/';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        }
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div class="dashboard-wrapper">
+        <div class="sidebar">
+            <h2>CRE: Dashboard</h2>
+            <a href="{{ url_for('dashboard') }}">Home</a>
+            <a href="{{ url_for('marketing') }}">File Uploader</a>
+            <a href="{{ url_for('database') }}">Results Viewer</a>
+            <a href="#" onclick="confirmLogout()">Logout</a>
+        </div>
+        <div class="main">
+            <div class="content-box">
+                {% block dashboard_content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
