@@ -21,14 +21,14 @@
             {% endwith %}
         </div>
 
-        <form method="POST" action="{{ url_for('login') }}">
+        <form method="POST" action="{{ url_for('auth.login') }}">
             {{ form.hidden_tag() }}
 
             <div class="form-group">
-                {{ form.username(class="form-input", placeholder="Username") }}
-                {% if form.username.errors %}
+                {{ form.email(class="form-input", placeholder="Email") }}
+                {% if form.email.errors %}
                     <div class="error-message">
-                        {% for error in form.username.errors %}
+                        {% for error in form.email.errors %}
                             <small>{{ error }}</small><br>
                         {% endfor %}
                     </div>
@@ -49,8 +49,8 @@
             {{ form.submit(class="cta-button") }}
 
             <div class="form-text">
-                <a href="{{ url_for('reset') }}">Forgot password?</a>
-                <a href="{{ url_for('signup') }}">Sign up</a>
+                <a href="{{ url_for('auth.reset') }}">Forgot password?</a>
+                <a href="{{ url_for('auth.signup') }}">Sign up</a>
             </div>
         </form>
     </div>
