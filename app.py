@@ -122,7 +122,10 @@ def verify_account(f):
             
             return f(*args, **kwargs)
         except Exception as e:
-            print(f"Error verifying account: {str(e)}")
+            import traceback
+            print("=== ERROR IN verify_account ===")
+            print(f"Exception: {e}")
+            print(traceback.format_exc())
             return redirect(url_for('login'))
     return decorated_function
 
@@ -138,7 +141,7 @@ def dashboard():
 def marketing():
     user_files = os.listdir(UPLOAD_FOLDER)
     uploaded_files = [f for f in user_files if f.endswith('.pdf')]
-    return render_template('marketing.html', uploaded_files=uploaded_files)
+    return render_template('dashboard/marketing.html', uploaded_files=uploaded_files)
 
 
 @app.route('/dashboard/marketing/upload', methods=['POST'])
@@ -206,7 +209,7 @@ def database():
 
     pdf_list = [f for f in os.listdir("uploaded_pdfs") if f.endswith(".pdf")]
 
-    return render_template("database.html",
+    return render_template("dashboard/database.html",
                            excel_file=excel_file if os.path.exists(excel_path) else None,
                            headers=headers,
                            rows=rows,

@@ -6,15 +6,18 @@
     <div class="section-header">File Management</div>
     <div class="section-header">File Management</div>
 
-    <div id="drop-zone" class="drop-zone">
-        <div class="drop-zone-inner">
-            <img src="{{ url_for('static', filename='img/upload_icon.svg') }}" alt="Upload" class="upload-icon">
-            <p>Drag & Drop files here</p>
-            <button type="button" class="browse-button" onclick="document.getElementById('fileInput').click()">Browse Files</button>
-            <input type="file" id="fileInput" hidden>
+    <form id="uploadForm" action="{{ url_for('upload_rent_roll') }}" method="POST" enctype="multipart/form-data">
+        <div class="drop-zone" id="drop-zone">
+            <div class="drop-zone-inner">
+                <img src="{{ url_for('static', filename='img/upload_icon.svg') }}" alt="Upload" class="upload-icon">
+                <p>Drag & Drop files here</p>
+                <input type="file" id="fileInput" name="pdf" accept="application/pdf" required>
+                <button type="submit" class="browse-button">Upload</button>
+            </div>
         </div>
-    </div>
-
+    </form>
+    
+      
 
     <div class="list-box">
         <h3>Your Files</h3>
@@ -24,11 +27,35 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const dropZone = document.getElementById('drop-zone');
             const fileInput = document.getElementById('fileInput');
+            const form = document.getElementById('uploadForm');
         
-            // Drag logic
+            // Helper: Upload file via fetch
+            async function uploadFile(file) {
+                const formData = new FormData();
+                formData.append('pdf', file);
+        
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData
+                    });
+        
+                    if (!response.ok) {
+                        const text = await response.text();
+                        throw new Error(`Upload failed: ${response.status} - ${text}`);
+                    }
+        
+                    window.location.reload(); // Refresh page on success
+                } catch (err) {
+                    alert('Upload failed: ' + err.message);
+                    console.error(err);
+                }
+            }
+        
+            // Handle drag and drop
             dropZone.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 dropZone.classList.add('dragover');
@@ -42,61 +69,17 @@
                 e.preventDefault();
                 dropZone.classList.remove('dragover');
                 const file = e.dataTransfer.files[0];
-                if (file) handleUpload(file);
+                if (file) uploadFile(file);
             });
         
+            // Handle browse
             fileInput.addEventListener('change', () => {
-                const file = fileInput.files[0];
-                if (file) handleUpload(file);
-            });
-        
-            async function handleUpload(file) {
-                try {
-                    const res = await fetch('/api/s3/upload-url', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ filename: file.name })
-                    });
-        
-                    const data = await res.json();
-                    await fetch(data.upload_url, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': file.type },
-                        body: file
-                    });
-        
-                    await fetch('/api/s3/files', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            filename: file.name,
-                            s3_key: data.s3_key,
-                            content_type: file.type,
-                            size_bytes: file.size
-                        })
-                    });
-        
-                    alert('Upload successful');
-                    loadFiles(); // reload list
-                } catch (err) {
-                    console.error(err);
-                    alert('Upload failed');
+                if (fileInput.files.length > 0) {
+                    uploadFile(fileInput.files[0]);
                 }
-            }
-        
-            async function loadFiles() {
-                const filesList = document.getElementById('filesList');
-                const res = await fetch('/api/local/files');
-                const data = await res.json();
-                filesList.innerHTML = '';
-                data.files.forEach(file => {
-                    const div = document.createElement('div');
-                    div.textContent = file.filename;
-                    filesList.appendChild(div);
-                });
-            }
-        
-            loadFiles();
+            });
         });
-        </script>        
+        </script>
+        
+          
 {% endblock %}
