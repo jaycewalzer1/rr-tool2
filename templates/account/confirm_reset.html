@@ -6,7 +6,8 @@
     <div class="account-wrapper">
         <div class="account-header">
             <h1>Confirm Password Reset</h1>
-            <p>Enter the confirmation code sent to your email address.</p>
+            <p>Enter the confirmation code sent to your email address to verify your identity.</p>
+            <p>After verification, you'll be able to set a new password.</p>
         </div>
 
         <div class="flash-messages">
@@ -21,7 +22,7 @@
             {% endwith %}
         </div>
 
-        <form method="POST">
+        <form method="POST" action="{{ url_for('auth.confirm_reset') }}">
             {{ form.hidden_tag() }}
             <div class="form-group">
                 {{ form.confirmation_code(class="form-input", placeholder="Confirmation Code") }}

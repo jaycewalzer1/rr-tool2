@@ -113,38 +113,95 @@
 }
 
 /* Upload Box */
-.upload-box {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
+.plan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
 }
 
-.upload-box form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+.plan-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    text-align: center;
+    transition: transform 0.3s ease;
 }
 
-.upload-box input[type="file"] {
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+.plan-card:hover {
+    transform: translateY(-5px);
 }
 
-.upload-box button {
+.plan-card h3 {
+    color: var(--black);
+    margin: 0 0 1rem 0;
+    font-size: 1.75rem;
+}
+
+.plan-card p {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--black);
+    margin: 0 0 1rem 0;
+}
+
+.plan-card h4 {
+    color: var(--gray);
+    margin: 0 0 2rem 0;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.subscribe-btn {
     background-color: var(--lilac);
     color: white;
     border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
+    padding: 1rem 2rem;
+    border-radius: var(--radius-md);
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all 0.3s ease;
+    width: 100%;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    user-select: none;
 }
 
-.upload-box button:hover {
+.subscribe-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
     background-color: var(--lilac-dark);
+}
+
+/* Dark lilac buttons for all dashboard actions */
+button, .button {
+    background-color: var(--lilac);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    user-select: none;
+}
+
+button:hover, .button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+    background-color: var(--lilac-dark);
+}
+
+/* Prevent text selection on all interactive elements */
+button, .button, .subscribe-btn, .plan-card {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 /* List Box */
