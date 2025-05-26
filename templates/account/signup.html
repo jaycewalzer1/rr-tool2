@@ -21,7 +21,7 @@
             {% endwith %}
         </div>
 
-        <form method="POST" action="{{ url_for('signup') }}">
+        <form method="POST" action="{{ url_for('auth.signup') }}">
             {{ form.hidden_tag() }}
 
             <div class="form-group">
@@ -93,7 +93,7 @@
             {{ form.submit(class="cta-button") }}
 
             <div class="form-text">
-                <a href="{{ url_for('login') }}">Already have an account? Log in</a>
+                <a href="{{ url_for('auth.login') }}">Already have an account? Log in</a>
             </div>
         </form>
     </div>

@@ -1,0 +1,243 @@
+from flask import Blueprint, render_template, redirect, url_for, request, flash, session, jsonify
+import stripe
+from dotenv import load_dotenv
+import os
+from datetime import datetime
+from flask import Flask, request
+
+load_dotenv()
+STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+stripe.api_key = STRIPE_SECRET_KEY
+from decorators import login_required, verify_account
+
+dashboard_bp = Blueprint('dashboard', __name__)
+
+@dashboard_bp.route('/dashboard')
+@login_required
+@verify_account
+def dashboard():
+    return render_template('dashboard/files.html')
+
+@dashboard_bp.route('/database')
+@login_required
+@verify_account
+def database():
+    return render_template('dashboard/database.html')
+
+@dashboard_bp.route('/files')
+@login_required
+@verify_account
+def files():
+    return render_template('dashboard/files.html')
+
+@dashboard_bp.route('/subscription')
+@login_required
+@verify_account
+def subscription():
+    return render_template('dashboard/subscription.html', publishable_key=STRIPE_PUBLIC_KEY)
+
+@dashboard_bp.route('/gmaps')
+@login_required
+@verify_account
+def gmaps():
+    return render_template('dashboard/gmaps.html')
+
+@dashboard_bp.route('/subscription/status')
+@login_required
+@verify_account
+def subscription_status():
+    try:
+        # Get user email from session
+        user_email = session['user'].get('email')
+        if not user_email:
+            return jsonify(error="User email not found in session"), 400
+            
+        # Get customer data
+        customers = stripe.Customer.list(email=user_email).data
+        if not customers:
+            return jsonify({
+                'status': 'no_subscription',
+                'current_plan': None,
+                'next_billing_date': None,
+                'upload_credits': 0,
+                'last_payment_date': None
+            })
+            
+        customer = customers[0]
+        metadata = customer.metadata
+        
+        # Get current subscription if exists
+        subscriptions = stripe.Subscription.list(customer=customer.id)
+        current_subscription = subscriptions.data[0] if subscriptions.data else None
+        
+        # Get payment history
+        payments = stripe.PaymentIntent.list(customer=customer.id)
+        
+        return jsonify({
+            'status': metadata.get('subscription_status', 'no_subscription'),
+            'current_plan': metadata.get('current_plan', None),
+            'next_billing_date': current_subscription.current_period_end if current_subscription else None,
+            'upload_credits': metadata.get('upload_credits', 0),
+            'last_payment_date': metadata.get('last_payment_date', None),
+            'payments': [
+                {
+                    'id': payment.id,
+                    'amount': payment.amount,
+                    'created': payment.created,
+                    'status': payment.status
+                }
+                for payment in payments.data
+            ]
+        })
+    except Exception as e:
+        print(f"Error in subscription status: {str(e)}")
+        return jsonify(error=str(e)), 500
+
+@dashboard_bp.route('/payment/history')
+@login_required
+@verify_account
+def payment_history():
+    try:
+        # Get user email from session
+        user_email = session['user'].get('email')
+        if not user_email:
+            return jsonify(error="User email not found in session"), 400
+            
+        customer = stripe.Customer.list(email=user_email).data[0]
+        payments = stripe.PaymentIntent.list(customer=customer.id)
+        
+        return jsonify({
+            'payments': [
+                {
+                    'id': payment.id,
+                    'amount': payment.amount,
+                    'created': payment.created,
+                    'status': payment.status
+                }
+                for payment in payments.data
+            ]
+        })
+    except IndexError:
+        return jsonify(error="Customer not found"), 404
+    except Exception as e:
+        return jsonify(error=str(e)), 500
+
+
+
+@dashboard_bp.route('/create-checkout-session/<plan>', methods=['POST'])
+@login_required
+@verify_account
+def create_checkout_session(plan):
+    print("\n=== START CHECKOUT SESSION CREATION ===")
+    print(f"Received request for plan: {plan}")
+    print(f"Request headers: {dict(request.headers)}")
+    print(f"Request is JSON: {request.is_json}")
+    
+    # Ensure we're getting JSON
+    if not request.is_json:
+        print("Error: Request is not JSON")
+        return jsonify({ 'error': 'Expected JSON request' }), 400
+
+    try:
+        print("\n=== USER SESSION CHECK ===")
+        user_email = session.get('user', {}).get('email')
+        user_id = session.get('user', {}).get('user_id')
+        print(f"User info - email: {user_email}, id: {user_id}")
+        print(f"Full session data: {dict(session)}")
+
+        if not user_email or not user_id:
+            print("Error: Missing user info")
+            return jsonify({ 'error': 'User information not found in session' }), 400
+
+        print("\n=== CUSTOMER MANAGEMENT ===")
+        customer_list = stripe.Customer.list(email=user_email).data
+        if customer_list:
+            customer_id = customer_list[0].id
+            print(f"Found existing customer: {customer_id}")
+        else:
+            print(f"Creating new customer for email: {user_email}")
+            new_customer = stripe.Customer.create(
+                email=user_email,
+                metadata={
+                    'subscription_status': 'pending',
+                    'last_payment_date': datetime.now().isoformat(),
+                    'user_id': user_id,
+                    'current_plan': plan
+                }
+            )
+            customer_id = new_customer.id
+            print(f"Created new customer: {customer_id}")
+
+        print("\n=== PLAN VALIDATION ===")
+        plans = {
+            'basic': {
+                'name': 'Basic Plan',
+                'amount': 999
+            },
+            'premium': {
+                'name': 'Premium Plan',
+                'amount': 2999
+            },
+            'enterprise': {
+                'name': 'Enterprise Plan',
+                'amount': 9999
+            }
+        }
+
+        if plan not in plans:
+            print(f"Error: Invalid plan: {plan}")
+            return jsonify({ 'error': 'Invalid plan' }), 400
+
+        print("\n=== CHECKOUT SESSION CREATION ===")
+        checkout_session = stripe.checkout.Session.create(
+            customer=customer_id,
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'unit_amount': plans[plan]['amount'],
+                    'product_data': {
+                        'name': plans[plan]['name'],
+                        'description': f"{plans[plan]['name']} subscription"
+                    },
+                    'recurring': {
+                        'interval': 'month'
+                    }
+                },
+                'quantity': 1
+            }],
+            mode='subscription',
+            success_url=url_for('dashboard.subscription', _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url=url_for('dashboard.subscription', _external=True) + '?cancelled=true',
+            metadata={
+                'user_id': user_id,
+                'plan': plan
+            }
+        )
+
+        print("\n=== CHECKOUT SESSION SUCCESS ===")
+        print(f"Created checkout session: {checkout_session.id}")
+        print(f"Session URL: {checkout_session.url}")
+        print(f"Session status: {checkout_session.status}")
+        print(f"Session payment status: {checkout_session.payment_status}")
+        print(f"Session mode: {checkout_session.mode}")
+        print(f"Session metadata: {checkout_session.metadata}")
+
+        return jsonify({
+            'id': checkout_session.id,
+            'url': checkout_session.url
+        })
+
+    except stripe.error.StripeError as e:
+        print("\n=== STRIPE ERROR ===")
+        print(f"Stripe API error: {str(e)}")
+        print(f"Error type: {type(e).__name__}")
+        print(f"Error code: {getattr(e, 'code', 'unknown')}")
+        return jsonify({ 'error': str(e) }), 400
+
+    except Exception as e:
+        print("\n=== GENERAL ERROR ===")
+        print(f"Unexpected error: {str(e)}")
+        print(f"Error type: {type(e).__name__}")
+        return jsonify({ 'error': 'An unexpected error occurred' }), 500
