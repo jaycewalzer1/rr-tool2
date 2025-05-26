@@ -1,0 +1,63 @@
+{% extends "dashboard_wrapper.html" %}
+
+{% block dashboard_title %}Subscription Management - CRE: AI Solutions{% endblock %}
+
+{% block dashboard_content %}
+<div class="main">
+    <div class="section-header">Subscription Management</div>
+    
+    <div class="content-box">
+        <div class="subscription-status">
+            <h3>Current Subscription Status</h3>
+            <div id="subscription-status" class="subscription-status">
+                <h3>Current Subscription Status</h3>
+                <div class="status-item">
+                    <span class="label">Status:</span>
+                    <span class="value" id="status-value"></span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Current Plan:</span>
+                    <span class="value" id="plan-value"></span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Amount:</span>
+                    <span class="value" id="amount-value" data-type="amount"></span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Next Billing Date:</span>
+                    <span class="value" id="billing-date-value"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subscription-plans">
+            <h3>Available Plans</h3>
+            <div class="plan-grid">
+                <div class="plan-card" data-plan-id="basic">
+                    <h3>Basic Plan</h3>
+                    <p>$9.99/month</p>
+                    <h4>Access to all mapping and analysis tools</h4>
+                    <button class="subscribe-btn" onclick="subscribe('basic')">Subscribe</button>
+                </div>
+
+                <div class="plan-card" data-plan-id="premium">
+                    <h3>Premium Plan</h3>
+                    <p>$29.99/month</p>
+                    <h4>Access to all mapping and analysis tools, and direct access to developer tools and support</h4>
+                    <button class="subscribe-btn" onclick="subscribe('premium')">Subscribe</button>
+                </div>
+
+                <div class="plan-card" data-plan-id="enterprise">
+                    <h3>Enterprise Plan</h3>
+                    <p>$99.99/month</p>
+                    <h4>Access to all mapping and analysis tools, and direct access to developer tools and support for full company</h4>
+                    <button class="subscribe-btn" onclick="subscribe('enterprise')">Subscribe</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script src="{{ url_for('static', filename='js/subscription.js') }}"></script>
+{% endblock %}
