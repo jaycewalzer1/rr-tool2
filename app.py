@@ -4,6 +4,7 @@ from models import db
 from routes import register_routes
 import os
 from flask_session import Session
+from sqlalchemy import inspect
 
 load_dotenv()
 
@@ -22,15 +23,13 @@ register_routes(app)
 
 if __name__ == '__main__':
     with app.app_context():
-        # Create all tables
-        db.create_all()
-        
-        # Check if tables exist
-        if not db.engine.dialect.has_table(db.engine, 'user'):
+        inspector = inspect(db.engine)
+
+        if not inspector.has_table('user'):
             print("Creating user table...")
             db.create_all()
-        
-        if not db.engine.dialect.has_table(db.engine, 'file'):
+
+        if not inspector.has_table('file'):
             print("Creating file table...")
             db.create_all()
     
