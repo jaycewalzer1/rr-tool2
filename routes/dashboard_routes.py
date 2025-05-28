@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 import os
 from datetime import datetime
 from flask import Flask, request
+import boto3
+from db_handler import process_uploaded_pdf
+
 
 load_dotenv()
 STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
@@ -241,3 +244,80 @@ def create_checkout_session(plan):
         print(f"Unexpected error: {str(e)}")
         print(f"Error type: {type(e).__name__}")
         return jsonify({ 'error': 'An unexpected error occurred' }), 500
+    
+@dashboard_bp.route('/api/s3/upload-url', methods=['POST'])
+@login_required
+def generate_presigned_upload_url():
+    data = request.get_json()
+    filename = data.get('filename')
+    if not filename:
+        return jsonify({'error': 'Missing filename'}), 400
+
+    user_id = session.get('user').get('user_id')
+
+    s3_client = boto3.client('s3')
+    bucket = os.getenv('S3_BUCKET_NAME_PDF')
+
+    key = f"uploads/{user_id}/{filename}"
+
+    url = s3_client.generate_presigned_url(
+        'put_object',
+        Params={'Bucket': bucket, 'Key': key},
+        ExpiresIn=3600
+    )
+
+    return jsonify({
+        'upload_url': url,
+        's3_key': key
+    })
+
+@dashboard_bp.route('/api/s3/files', methods=['GET'])
+@login_required
+def list_s3_files():
+
+    s3 = boto3.client('s3')
+    bucket = os.getenv('S3_BUCKET_NAME_PDF')
+    user_id = session.get('user', {}).get('user_id')
+
+    prefix = f'uploads/{user_id}/'
+
+    try:
+        response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
+        files = []
+
+        for obj in response.get('Contents', []):
+            key = obj['Key']
+            filename = key.split('/')[-1]  # strip user folder
+            files.append({
+                'filename': filename,
+                's3_key': key,
+                'size': obj['Size'],
+                'last_modified': obj['LastModified'].isoformat()
+            })
+
+        return jsonify({'files': files})
+
+    except Exception as e:
+        print(f"Error listing files from S3: {str(e)}")
+        return jsonify({'error': 'Could not list files'}), 500
+    
+@dashboard_bp.route('/api/s3/files', methods=['POST'])
+@login_required
+def handle_uploaded_file():
+    data = request.get_json()
+    filename = data.get('filename')
+    user_id = session.get('user', {}).get('user_id')
+
+    if not filename or not user_id:
+        return jsonify({'error': 'Missing filename or user_id'}), 400
+
+    try:
+        # Call your OCR + Excel logic here
+        result = process_uploaded_pdf(user_id, filename)
+        return jsonify({
+            'message': 'File processed successfully',
+            'excel_key': result['excel_s3_key']
+        })
+    except Exception as e:
+        print(f"Error processing uploaded file: {e}")
+        return jsonify({'error': 'Processing failed'}), 500
