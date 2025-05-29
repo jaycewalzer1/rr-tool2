@@ -1,9 +1,14 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash, session, jsonify
+from flask import Blueprint, render_template, redirect, url_for, request, flash, session, jsonify, send_file, session, abort
 import stripe
 from dotenv import load_dotenv
 import os
 from datetime import datetime
 from flask import Flask, request
+import boto3
+from db_handler import process_uploaded_pdf
+import botocore.exceptions
+import tempfile
+
 
 load_dotenv()
 STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
@@ -12,6 +17,9 @@ stripe.api_key = STRIPE_SECRET_KEY
 from decorators import login_required, verify_account
 
 dashboard_bp = Blueprint('dashboard', __name__)
+
+s3_client = boto3.client('s3')
+excel_bucket = os.getenv('S3_BUCKET_NAME_EXCEL')
 
 @dashboard_bp.route('/dashboard')
 @login_required
@@ -23,7 +31,25 @@ def dashboard():
 @login_required
 @verify_account
 def database():
-    return render_template('dashboard/database.html')
+    user_id = session.get('user', {}).get('user_id')
+    excel_key = f"uploads/{user_id}_master.xlsx"
+
+    # Check if file exists in S3
+    try:
+        s3_client.head_object(Bucket=excel_bucket, Key=excel_key)
+        excel_file = f"{user_id}_master.xlsx"
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] in ['404', 'NoSuchKey']:
+            excel_file = None
+        else:
+            raise
+
+    # You can also get list of uploaded PDFs if needed
+    pdf_prefix = f"uploads/{user_id}/"
+    response = s3_client.list_objects_v2(Bucket=os.getenv('S3_BUCKET_NAME_PDF'), Prefix=pdf_prefix)
+    pdf_list = [obj['Key'].split('/')[-1] for obj in response.get('Contents', []) if obj['Key'].endswith('.pdf')]
+    return render_template('dashboard/database.html', excel_file=excel_file, pdf_list=pdf_list)
+
 
 @dashboard_bp.route('/files')
 @login_required
@@ -241,3 +267,107 @@ def create_checkout_session(plan):
         print(f"Unexpected error: {str(e)}")
         print(f"Error type: {type(e).__name__}")
         return jsonify({ 'error': 'An unexpected error occurred' }), 500
+    
+@dashboard_bp.route('/api/s3/upload-url', methods=['POST'])
+@login_required
+def generate_presigned_upload_url():
+    data = request.get_json()
+    filename = data.get('filename')
+    if not filename:
+        return jsonify({'error': 'Missing filename'}), 400
+
+    user_id = session.get('user').get('user_id')
+
+    s3_client = boto3.client('s3')
+    bucket = os.getenv('S3_BUCKET_NAME_PDF')
+
+    key = f"uploads/{user_id}/{filename}"
+
+    url = s3_client.generate_presigned_url(
+        'put_object',
+        Params={'Bucket': bucket, 'Key': key},
+        ExpiresIn=3600
+    )
+
+    return jsonify({
+        'upload_url': url,
+        's3_key': key
+    })
+
+@dashboard_bp.route('/api/s3/files', methods=['GET'])
+@login_required
+def list_s3_files():
+
+    s3 = boto3.client('s3')
+    bucket = os.getenv('S3_BUCKET_NAME_PDF')
+    user_id = session.get('user', {}).get('user_id')
+
+    prefix = f'uploads/{user_id}/'
+
+    try:
+        response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
+        files = []
+
+        for obj in response.get('Contents', []):
+            key = obj['Key']
+            filename = key.split('/')[-1]  # strip user folder
+            files.append({
+                'filename': filename,
+                's3_key': key,
+                'size': obj['Size'],
+                'last_modified': obj['LastModified'].isoformat()
+            })
+
+        return jsonify({'files': files})
+
+    except Exception as e:
+        print(f"Error listing files from S3: {str(e)}")
+        return jsonify({'error': 'Could not list files'}), 500
+    
+@dashboard_bp.route('/api/s3/files', methods=['POST'])
+@login_required
+def handle_uploaded_file():
+    data = request.get_json()
+    filename = data.get('filename')
+    user_id = session.get('user', {}).get('user_id')
+
+    if not filename or not user_id:
+        return jsonify({'error': 'Missing filename or user_id'}), 400
+
+    try:
+        # Call your OCR + Excel logic here
+        result = process_uploaded_pdf(user_id, filename)
+        return jsonify({
+            'message': 'File processed successfully',
+            'excel_key': result['excel_s3_key']
+        })
+    except Exception as e:
+        print(f"Error processing uploaded file: {e}")
+        return jsonify({'error': 'Processing failed'}), 500
+
+@dashboard_bp.route('/dashboard/download-excel/<filename>')
+@login_required
+def download_master_excel(filename):
+    user_id = session.get('user').get('user_id')
+    expected_filename = f"{user_id}_master.xlsx"
+
+    if filename != expected_filename:
+        abort(403)  #prevent access to other users' files
+
+    excel_key = f"uploads/{filename}"
+
+    # Create a temporary file to download to
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as temp_excel:
+        try:
+            s3_client.download_file(excel_bucket, excel_key, temp_excel.name)
+            return send_file(
+                temp_excel.name,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                download_name=filename,
+                as_attachment=True
+            )
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] in ['404', 'NoSuchKey']:
+                abort(404)
+            else:
+                raise
