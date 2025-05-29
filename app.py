@@ -33,4 +33,4 @@ if __name__ == '__main__':
             print("Creating file table...")
             db.create_all()
     
-    app.run()
+    app.run(debug=True)
