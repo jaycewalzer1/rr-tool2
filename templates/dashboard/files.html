@@ -117,9 +117,16 @@
                 const data = await res.json();
                 filesList.innerHTML = '';
                 data.files.forEach(file => {
-                    const div = document.createElement('div');
-                    div.textContent = file.filename;
-                    filesList.appendChild(div);
+                    const container = document.createElement('div');
+
+                    const link = document.createElement('a');
+                    link.href = file.public_url;
+                    link.textContent = file.filename;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+
+                    container.appendChild(link);
+                    filesList.appendChild(container);
                 });
             }
         
