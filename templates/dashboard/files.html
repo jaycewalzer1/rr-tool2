@@ -82,7 +82,7 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ filename: file.name })
                     });
-                    console.log(res);
+        
                     const data = await res.json();
                     await fetch(data.upload_url, {
                         method: 'PUT',
@@ -113,7 +113,7 @@
         
             async function loadFiles() {
                 const filesList = document.getElementById('filesList');
-                const res = await fetch('/api/s3/files');
+                const res = await fetch('/api/local/files');
                 const data = await res.json();
                 filesList.innerHTML = '';
                 data.files.forEach(file => {

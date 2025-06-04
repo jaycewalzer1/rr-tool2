@@ -1,20 +1,14 @@
-from flask import Blueprint, jsonify, request, session, redirect, url_for, flash
+from flask import Blueprint, jsonify, request, session, redirect, url_for, render_template
 import stripe
 import os
-import json
 from datetime import datetime
-from dotenv import load_dotenv
 from decorators import login_required, verify_account
-
-load_dotenv()
 
 STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
-
 stripe.api_key = STRIPE_SECRET_KEY
 
 subscription_bp = Blueprint('subscription', __name__)
-
 
 @subscription_bp.route('/webhook', methods=['POST'])
 def webhook():
@@ -121,7 +115,7 @@ def webhook():
 def subscription_status():
     try:
         # Get user email from session
-        user_email = session.get('user', {}).get('email')
+        user_email = session['user'].get('email')
         if not user_email:
             return jsonify({
                 'error': 'User email not found in session',
@@ -134,50 +128,40 @@ def subscription_status():
             return jsonify({
                 'status': 'inactive',
                 'error': 'Customer not found',
-                'message': 'No customer account found for this email'
-            }), 404
-            
-        customer_id = customer[0].id
-        customer_data = stripe.Customer.retrieve(customer_id)
-        metadata = customer_data.metadata or {}
+                'current_plan': None,
+                'next_billing_date': None,
+                'upload_credits': 0,
+                'last_payment_date': None
+            })
 
-        # Get subscriptions
-        subscriptions = stripe.Subscription.list(customer=customer_id, limit=1)
-        subscription = None
-        if subscriptions.data:
-            subscription = subscriptions.data[0]
-            plan = subscription.items.data[0].price
-        else:
-            # Check if there's a pending subscription
-            if metadata.get('subscription_status') == 'pending':
-                return jsonify({
-                    'status': 'pending',
-                    'message': 'Subscription is being processed',
-                    'checkout_session_id': metadata.get('checkout_session_id'),
-                    'customer_id': customer_id
-                }), 200
-
-        if not subscription:
-            return jsonify({
-                'status': 'inactive',
-                'message': 'No active subscription found',
-                'customer_id': customer_id
-            }), 200
-
+        customer = customer[0]
+        metadata = customer.metadata
+        
+        # Get current subscription if exists
+        subscriptions = stripe.Subscription.list(customer=customer.id)
+        current_subscription = subscriptions.data[0] if subscriptions.data else None
+        
+        # Get payment history
+        payments = stripe.PaymentIntent.list(customer=customer.id)
+        
         return jsonify({
-            'status': subscription.status,
-            'current_period_end': subscription.current_period_end,
-            'plan': {
-                'id': plan.id,
-                'nickname': plan.nickname,
-                'amount': plan.unit_amount,
-                'currency': plan.currency
-            },
-            'customer_id': customer_id,
-            'upload_credits': metadata.get('upload_credits'),
-            'subscription_id': metadata.get('subscription_id'),
-            'subscription_status': metadata.get('subscription_status')
+            'status': metadata.get('subscription_status', 'no_subscription'),
+            'current_plan': metadata.get('current_plan', None),
+            'next_billing_date': current_subscription.current_period_end if current_subscription else None,
+            'upload_credits': metadata.get('upload_credits', 0),
+            'last_payment_date': metadata.get('last_payment_date', None),
+            'payments': [
+                {
+                    'id': payment.id,
+                    'amount': payment.amount,
+                    'created': payment.created,
+                    'status': payment.status,
+                    'invoice_url': payment.invoice
+                }
+                for payment in payments.data
+            ]
         })
+
     except stripe.error.StripeError as e:
         print(f"Stripe API error getting subscription status: {str(e)}")
         return jsonify({
@@ -185,6 +169,7 @@ def subscription_status():
             'message': str(e),
             'status': 'error'
         }), 500
+
     except Exception as e:
         print(f"Error getting subscription status: {str(e)}")
         return jsonify({
@@ -193,10 +178,134 @@ def subscription_status():
             'status': 'error'
         }), 500
 
-
-@subscription_bp.route('/subscription/create', methods=['POST'])
+@subscription_bp.route('/subscription/change-plan')
 @login_required
 @verify_account
+def change_plan():
+    try:
+        user_email = session['user'].get('email')
+        if not user_email:
+            return jsonify({'error': 'User email not found'}), 400
+
+        # Get customer
+        customer = stripe.Customer.list(email=user_email).data[0]
+        
+        # Create checkout session for plan change
+        checkout_session = stripe.checkout.Session.create(
+            customer=customer.id,
+            payment_method_types=['card'],
+            mode='subscription',
+            line_items=[{
+                'price': os.getenv('STRIPE_PRICE_ID_BASIC'),  # Make sure this is set in your .env
+                'quantity': 1,
+            }],
+            success_url=url_for('subscription.manage_membership', _external=True) + '?success=true',
+            cancel_url=url_for('subscription.manage_membership', _external=True) + '?cancelled=true',
+            metadata={'user_id': session['user']['user_id']}
+        )
+
+        return jsonify({'url': checkout_session.url})
+
+    except Exception as e:
+        print(f"Error creating plan change session: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@subscription_bp.route('/subscription/payment-history')
+@login_required
+@verify_account
+def payment_history():
+    try:
+        user_email = session['user'].get('email')
+        if not user_email:
+            return jsonify({'error': 'User email not found'}), 400
+
+        # Get customer
+        customer = stripe.Customer.list(email=user_email).data[0]
+        
+        # Get payment history
+        payments = stripe.PaymentIntent.list(customer=customer.id)
+        
+        return jsonify({
+            'payments': [
+                {
+                    'id': payment.id,
+                    'amount': payment.amount,
+                    'created': payment.created,
+                    'status': payment.status,
+                    'invoice_url': payment.invoice
+                }
+                for payment in payments.data
+            ]
+        })
+
+    except Exception as e:
+        print(f"Error getting payment history: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@subscription_bp.route('/subscription/cancel', methods=['POST'])
+@login_required
+@verify_account
+def cancel_subscription():
+    try:
+        user_email = session['user'].get('email')
+        if not user_email:
+            return jsonify({'error': 'User email not found'}), 400
+
+        # Get customer
+        customer = stripe.Customer.list(email=user_email).data
+        if not customer:
+            return jsonify({'error': 'Customer not found'}), 400
+
+        customer = customer[0]
+        
+        # Get active subscription
+        subscriptions = stripe.Subscription.list(customer=customer.id, status='active')
+        if not subscriptions.data:
+            return jsonify({'error': 'No active subscription found'}), 400
+
+        subscription = subscriptions.data[0]
+        
+        # Cancel subscription at period end
+        cancelled_subscription = stripe.Subscription.modify(
+            subscription.id,
+            cancel_at_period_end=True
+        )
+
+        # Update customer metadata
+        stripe.Customer.modify(
+            customer.id,
+            metadata={
+                'subscription_status': 'cancelled_at_end',
+                'current_plan': None
+            }
+        )
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Subscription will be cancelled at the end of the current billing cycle'
+        })
+
+    except stripe.error.StripeError as e:
+        print(f"Stripe API error cancelling subscription: {str(e)}")
+        return jsonify({
+            'error': 'Stripe API error',
+            'message': str(e)
+        }), 500
+
+    except Exception as e:
+        print(f"Error cancelling subscription: {str(e)}")
+        return jsonify({
+            'error': 'Internal server error',
+            'message': str(e)
+        }), 500
+
+@subscription_bp.route('/manage-membership')
+@login_required
+@verify_account
+def manage_membership():
+    return render_template('dashboard/manage_membership.html')
+
+@subscription_bp.route('/subscription/create', methods=['POST'])
 def create_subscription():
     try:
         customer = stripe.Customer.list(email=session['email']).data[0]
@@ -218,23 +327,4 @@ def create_subscription():
         })
     except Exception as e:
         print(f"Error creating subscription: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-
-@subscription_bp.route('/subscription/cancel', methods=['POST'])
-@login_required
-@verify_account
-def cancel_subscription():
-    try:
-        customer = stripe.Customer.list(email=session['email']).data[0]
-        subscription_id = request.json.get('subscription_id')
-
-        if not subscription_id:
-            return jsonify({'error': 'Subscription ID is required'}), 400
-
-        subscription = stripe.Subscription.delete(subscription_id)
-
-        return jsonify({'status': subscription.status})
-    except Exception as e:
-        print(f"Error canceling subscription: {str(e)}")
         return jsonify({'error': str(e)}), 500

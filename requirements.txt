@@ -1,6 +1,7 @@
 Flask==3.0.0
 Flask-WTF==1.2.1
 Flask-Session==0.5.0
+Flask-SQLAlchemy==3.1.1
 SQLAlchemy==2.0.25
 Jinja2==3.1.3
 Werkzeug==3.0.1
@@ -12,5 +13,10 @@ PyJWT==2.8.0
 requests==2.28.1
 urllib3==1.26.18
 numpy==1.26.2
-pillow==9.5.0
+Pillow==10.1.0
 cachelib==0.13.0
+bcrypt==4.0.1
+boto3==1.29.0
+botocore==1.32.0
+PyMuPDF==1.24.1
+pytesseract==0.3.10

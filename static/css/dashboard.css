@@ -1,14 +1,16 @@
-/* Dashboard Layout */
+/* DASHBOARD WRAPPER */
 .dashboard-wrapper {
     display: flex;
+    flex-wrap: wrap;
     min-height: 100vh;
     background-color: var(--white-light);
     padding: 2rem;
+    gap: 2rem;
 }
 
-/* Sidebar */
+/* SIDEBAR */
 .sidebar {
-    width: 280px;
+    flex: 0 0 280px;
     background: var(--glass-bg);
     backdrop-filter: blur(12px);
     padding: 2rem;
@@ -31,8 +33,8 @@
     text-decoration: none;
     border-radius: var(--radius-md);
     margin-bottom: 0.75rem;
-    transition: all 0.3s ease;
     font-weight: 500;
+    transition: all 0.3s ease;
 }
 
 .sidebar a:hover {
@@ -41,22 +43,32 @@
     transform: translateX(4px);
 }
 
-/* Main Content */
+/* MAIN CONTENT */
 .main {
-    flex: 1;
+    flex: 1 1 0;
     padding: 2rem;
     max-width: 1200px;
     margin: 0 auto;
 }
 
-/* Card Styles */
+/* SECTION HEADER */
+.section-header {
+    font-size: clamp(1.75rem, 3.5vw, 2.25rem);
+    font-weight: 700;
+    color: var(--black);
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid var(--lilac);
+    padding-bottom: 0.5rem;
+}
+
+/* CARD */
 .card {
     background: var(--white);
     padding: 1.5rem;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
     margin-bottom: 1.5rem;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .card:hover {
@@ -64,22 +76,17 @@
     box-shadow: var(--shadow-lg);
 }
 
-/* Section Header */
-.section-header {
-    font-size: clamp(1.75rem, 3.5vw, 2.25rem);
-    font-weight: 700;
-    color: var(--black);
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--lilac);
+.card h2 {
+    color: #333;
+    margin: 0 0 15px;
 }
 
-/* Content Box */
+/* CONTENT BOX */
 .content-box {
     background: var(--glass-bg);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: var(--radius-xl);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     padding: 2rem;
     box-shadow: var(--glass-shadow);
 }
@@ -89,30 +96,7 @@
     line-height: 1.8;
 }
 
-.card h2 {
-    color: #333;
-    margin-top: 0;
-    margin-bottom: 15px;
-}
-
-/* Section Header */
-.section-header {
-    font-size: 1.8rem;
-    color: #2c3e50;
-    margin-bottom: 20px;
-    border-bottom: 2px solid var(--lilac);
-    padding-bottom: 10px;
-}
-
-/* Content Box */
-.content-box {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Upload Box */
+/* PLAN GRID */
 .plan-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -123,11 +107,11 @@
 .plan-card {
     background: var(--glass-bg);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: var(--radius-xl);
     padding: 2rem;
     text-align: center;
     transition: transform 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .plan-card:hover {
@@ -135,76 +119,100 @@
 }
 
 .plan-card h3 {
-    color: var(--black);
-    margin: 0 0 1rem 0;
     font-size: 1.75rem;
+    color: var(--black);
+    margin-bottom: 1rem;
 }
 
 .plan-card p {
     font-size: 2.5rem;
     font-weight: bold;
     color: var(--black);
-    margin: 0 0 1rem 0;
+    margin-bottom: 1rem;
 }
 
 .plan-card h4 {
-    color: var(--gray);
-    margin: 0 0 2rem 0;
     font-size: 1rem;
+    color: var(--gray);
+    margin-bottom: 2rem;
     line-height: 1.5;
 }
 
-.subscribe-btn {
-    background-color: var(--lilac);
-    color: white;
-    border: none;
-    padding: 1rem 2rem;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: 100%;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    user-select: none;
-}
-
-.subscribe-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
-    background-color: var(--lilac-dark);
-}
-
-/* Dark lilac buttons for all dashboard actions */
-button, .button {
+/* SUBSCRIBE BUTTON */
+.subscribe-btn,
+.button {
     background-color: var(--lilac);
     color: white;
     border: none;
     padding: 0.75rem 1.5rem;
     border-radius: var(--radius-md);
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1px;
     user-select: none;
+    width: 100%;
 }
 
-button:hover, .button:hover {
+.subscribe-btn:hover,
+.button:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
     background-color: var(--lilac-dark);
 }
 
-/* Prevent text selection on all interactive elements */
-button, .button, .subscribe-btn, .plan-card {
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
-/* List Box */
+/* DROP ZONE */
+.drop-zone {
+    border: 2px dashed var(--gray-light);
+    border-radius: var(--radius-lg);
+    padding: clamp(2rem, 6vw, 4rem);
+    background-color: var(--white);
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.drop-zone.dragover {
+    background-color: #e6f4ea;
+    border-color: #27ae60;
+}
+
+.drop-zone-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.upload-icon {
+    width: 50px;
+    opacity: 0.5;
+}
+
+/* BROWSE BUTTON */
+.browse-button {
+    padding: 10px 20px;
+    background-color: var(--primary, #4f46e5);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s ease;
+}
+
+.browse-button:hover {
+    background-color: var(--primary-dark, #4338ca);
+}
+
+/* LIST BOX */
 .list-box {
     background: white;
     padding: 20px;
@@ -230,26 +238,29 @@ button, .button, .subscribe-btn, .plan-card {
     border-bottom: none;
 }
 
-/* Download Link */
+/* DOWNLOAD LINK */
 .download-link {
     display: inline-block;
-    padding: 8px 16px;
+    padding: 0.5rem 1rem;
     background-color: var(--lilac);
     color: white;
     text-decoration: none;
     border-radius: 4px;
-    margin: 10px 0;
+    font-weight: 500;
+    transition: background 0.3s ease;
 }
 
 .download-link:hover {
     background-color: var(--lilac-dark);
 }
 
-/* Tables */
+/* TABLES */
 .table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 1rem;
+    overflow-x: auto;
+    font-size: 0.95rem;
 }
 
 .table th,
@@ -264,59 +275,31 @@ button, .button, .subscribe-btn, .plan-card {
     font-weight: 600;
 }
 
-/* Buttons */
-button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
+/* RESPONSIVE OVERRIDES */
+@media (max-width: 768px) {
+    .dashboard-wrapper {
+        flex-direction: column;
+        padding: 1rem;
+    }
 
-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
+    .sidebar {
+        width: 100%;
+        padding: 1.5rem;
+    }
 
-.drop-zone {
-    border: 2px dashed var(--gray-light);
-    border-radius: var(--radius-lg);
-    padding: 50px;
-    background-color: var(--white);
-    text-align: center;
-    transition: all 0.3s ease;
-    position: relative;
-    margin-bottom: 2rem;
-}
+    .main {
+        padding: 1.5rem;
+    }
 
-.drop-zone.dragover {
-    background-color: #e6f4ea; /* Light green */
-    border: 2px dashed #27ae60; /* Green border */
-}
+    .drop-zone {
+        padding: 2rem;
+    }
 
-.drop-zone-inner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-}
+    .plan-grid {
+        grid-template-columns: 1fr;
+    }
 
-.upload-icon {
-    width: 50px;
-    opacity: 0.5;
-}
-
-.browse-button {
-    padding: 10px 20px;
-    background-color: var(--primary, #4f46e5);
-    color: white;
-    border: none;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    font-weight: 500;
-    transition: background 0.3s ease;
-}
-
-.browse-button:hover {
-    background-color: var(--primary-dark, #4338ca);
+    .subscribe-btn {
+        font-size: 1rem;
+    }
 }

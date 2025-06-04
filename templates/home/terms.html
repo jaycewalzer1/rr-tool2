@@ -3,60 +3,52 @@
 {% block title %}Terms of Service - CRE: AI Solutions{% endblock %}
 
 {% block main_content %}
-<div class="terms-container">
-    <h1>Terms of Service</h1>
-    <div class="terms-section">
-        <h2>Effective Date: May 15, 2025</h2>
-        <p>Last Updated: May 15, 2025</p>
-    </div>
+    <div class="legal-container">
+        <h1>Terms of Service</h1>
 
-    <div class="terms-section">
-        <h2>1. Acceptance of Terms</h2>
-        <p>By using our services, you agree to these Terms of Service.</p>
-    </div>
+        <div class="legal-section">
+            <h2>1. Acceptance of Terms</h2>
+            <p>By accessing or using CRE: AI Solutions, you agree to be bound by these Terms of Service. If you do not agree with these terms, please do not use our services.</p>
+        </div>
 
-    <div class="terms-section">
-        <h2>2. User Responsibilities</h2>
-        <ul>
-            <li>Maintain the confidentiality of your account information</li>
-            <li>Comply with all applicable laws and regulations</li>
-            <li>Use the services for lawful purposes only</li>
-            <li>Respect intellectual property rights</li>
-        </ul>
-    </div>
+        <div class="legal-section">
+            <h2>2. Account Registration</h2>
+            <ul>
+                <li>You must be at least 18 years old to use our services</li>
+                <li>You must provide accurate and complete information during registration</li>
+                <li>You are responsible for maintaining the confidentiality of your account credentials</li>
+            </ul>
+        </div>
 
-    <div class="terms-section">
-        <h2>3. Service Availability</h2>
-        <p>We strive to maintain reliable service but do not guarantee continuous availability.</p>
-    </div>
+        <div class="legal-section">
+            <h2>3. User Conduct</h2>
+            <ul>
+                <li>You agree not to misuse our services or violate any laws</li>
+                <li>You must not attempt to disrupt or interfere with our services</li>
+                <li>You must not use our services for unauthorized purposes</li>
+            </ul>
+        </div>
 
-    <div class="terms-section">
-        <h2>4. Intellectual Property</h2>
-        <p>All content and materials on our platform are protected by intellectual property laws.</p>
-    </div>
+        <div class="legal-section">
+            <h2>4. Intellectual Property</h2>
+            <ul>
+                <li>All content on our platform is protected by intellectual property laws</li>
+                <li>You may not copy, distribute, or modify our content without permission</li>
+                <li>You retain ownership of your own content that you submit to our platform</li>
+            </ul>
+        </div>
 
-    <div class="terms-section">
-        <h2>5. Limitation of Liability</h2>
-        <p>We are not liable for any damages arising from the use of our services.</p>
+        <div class="legal-section">
+            <h2>5. Subscription Services</h2>
+            <ul>
+                <li>We offer subscription-based access to our services</li>
+                <li>Subscription fees are non-refundable</li>
+                <li>We reserve the right to modify subscription plans and pricing</li>
+            </ul>
+        </div>
     </div>
-
-    <div class="terms-section">
-        <h2>6. Changes to Terms</h2>
-        <p>We reserve the right to modify these Terms of Service at any time.</p>
-    </div>
-
-    <div class="terms-section">
-        <h2>7. Termination</h2>
-        <p>We may terminate your access to the services at any time.</p>
-    </div>
-
-    <div class="terms-section">
-        <h2>8. Contact Us</h2>
-        <p>If you have any questions about these Terms of Service, please contact us at:</p>
-        <p><a href="mailto:legal@creaisolutions.com">legal@creaisolutions.com</a></p>
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_scripts %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}">
 {% endblock %}

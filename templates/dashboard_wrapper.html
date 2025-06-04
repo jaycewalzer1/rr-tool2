@@ -9,9 +9,27 @@
 {% block extra_scripts %}
     <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="dashboard-wrapper">
+        <div class="sidebar">
+            <h2>CRE: Dashboard</h2>
+            <a href="{{ url_for('dashboard.files') }}">File Uploader</a>
+            <a href="{{ url_for('dashboard.database') }}">Results Viewer</a>
+            <a href="{{ url_for('subscription.manage_membership') }}">Manage Subscription</a>
+            <a href="#" onclick="confirmLogout()">Logout</a>
+        </div>
+        <div class="main">
+            <div class="content-box">
+                {% block dashboard_content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
     <script>
         function confirmLogout() {
-            if (confirm('Are you sure you want to log out?')) {
+            if (confirm('Are you sure you want to logout?')) {
                 fetch('/logout', {
                     method: 'POST',
                     headers: {
@@ -28,22 +46,4 @@
             }
         }
     </script>
-{% endblock %}
-
-{% block content %}
-    <div class="dashboard-wrapper">
-        <div class="sidebar">
-            <h2>CRE: Dashboard</h2>
-            <a href="{{ url_for('dashboard.files') }}">File Uploader</a>
-            <a href="{{ url_for('dashboard.database') }}">Results Viewer</a>
-            <a href="{{ url_for('dashboard.subscription') }}">Subscription</a>
-            <a href="{{ url_for('dashboard.gmaps') }}">Map</a>
-            <a href="#" onclick="confirmLogout()">Logout</a>
-        </div>
-        <div class="main">
-            <div class="content-box">
-                {% block dashboard_content %}{% endblock %}
-            </div>
-        </div>
-    </div>
 {% endblock %}

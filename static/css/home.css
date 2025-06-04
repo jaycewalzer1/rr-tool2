@@ -1,6 +1,4 @@
-/* Home Page Styles */
-
-/* Navigation Styles */
+/* NAVIGATION */
 nav {
     display: flex;
     justify-content: space-between;
@@ -52,9 +50,9 @@ nav {
     transform: translateY(-2px);
 }
 
-/* Hero Section */
+/* HERO */
 .hero {
-    height: 100vh;
+    height: 80vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -63,189 +61,24 @@ nav {
     color: var(--black);
     overflow: hidden;
     position: relative;
-}
-
-.hero-text {
-    text-align: center;
-    max-width: 800px;
-    margin: 0 auto;
     padding: 0 2rem;
+    text-align: center;
 }
 
 .hero h1 {
     font-size: clamp(2.5rem, 5vw, 3.5rem);
     margin-bottom: 1.5rem;
-    color: var(--black);
     line-height: 1.2;
 }
 
-.hero-section p {
+.hero p {
     font-size: clamp(1rem, 2vw, 1.2rem);
     max-width: 800px;
     margin: 0 auto 40px;
     line-height: 1.6;
 }
 
-/* Policy Pages */
-.policy-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 3rem 2rem;
-    background: var(--white);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
-}
-
-.policy-container h1 {
-    font-size: clamp(2rem, 4vw, 2.5rem);
-    font-weight: 700;
-    color: var(--black);
-    margin-bottom: 2rem;
-    text-align: center;
-}
-
-.policy-section {
-    margin-bottom: 3rem;
-    padding-bottom: 2rem;
-    border-bottom: 1px solid var(--gray-light);
-}
-
-.policy-section:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-    padding-bottom: 0;
-}
-
-.policy-section h2 {
-    font-size: clamp(1.5rem, 3vw, 2rem);
-    font-weight: 600;
-    color: var(--black);
-    margin-bottom: 1.5rem;
-}
-
-.policy-section h2:first-child {
-    margin-top: 0;
-}
-
-.policy-section p {
-    font-size: clamp(1rem, 2vw, 1.125rem);
-    color: var(--gray);
-    line-height: 1.8;
-    margin-bottom: 1rem;
-}
-
-.policy-section ul {
-    margin-bottom: 1.5rem;
-    padding-left: 1.5rem;
-}
-
-.policy-section ul li {
-    margin-bottom: 0.75rem;
-    color: var(--gray-dark);
-}
-
-.policy-section a {
-    color: var(--lilac);
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.3s ease;
-}
-
-.policy-section a:hover {
-    color: var(--lilac-dark);
-    text-decoration: underline;
-    padding-bottom: 1px;
-    text-decoration-thickness: .5px;
-}
-
-/* Features Grid */
-.features {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-    padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-/* Solutions Grid */
-.solutions-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-    padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.solution-card {
-    background: var(--white);
-    padding: 2rem;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-    transition: all 0.3s ease;
-}
-
-.solution-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
-}
-
-.solution-card h3 {
-    font-size: clamp(1.25rem, 3vw, 1.5rem);
-    font-weight: 600;
-    color: var(--black);
-    margin-bottom: 1rem;
-}
-
-.solution-card p {
-    font-size: clamp(1rem, 2vw, 1.125rem);
-    color: var(--gray);
-    line-height: 1.8;
-    margin-bottom: 1.5rem;
-}
-
-.solution-card a {
-    color: var(--lilac);
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.3s ease;
-}
-
-.solution-card a:hover {
-    color: var(--lilac-dark);
-    text-decoration: underline;
-    padding-bottom: 1px;
-    text-decoration-thickness: .5px;
-}
-
-.feature {
-    background: var(--white);
-    padding: 2rem;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-    transition: all 0.3s ease;
-}
-
-.feature:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
-}
-
-.feature h3 {
-    font-size: clamp(1.25rem, 3vw, 1.5rem);
-    font-weight: 600;
-    color: var(--black);
-    margin-bottom: 1rem;
-}
-
-.feature p {
-    font-size: clamp(1rem, 2vw, 1.125rem);
-    color: var(--gray);
-    line-height: 1.8;
-}
-
-/* Call to Action Section */
+/* CTA SECTION */
 .cta-section {
     background: var(--light);
     padding: 80px 20px;
@@ -255,7 +88,7 @@ nav {
 .cta-section h2 {
     color: #2c3e50;
     margin-bottom: 30px;
-    font-size: 2.5rem;
+    font-size: clamp(2rem, 4vw, 2.5rem);
 }
 
 .cta-button {
@@ -273,7 +106,61 @@ nav {
     background: var(--primary-dark);
 }
 
-/* Stats Section */
+/* FEATURES & SOLUTIONS GRIDS */
+.features,
+.solutions-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.feature,
+.solution-card {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature:hover,
+.solution-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+.feature h3,
+.solution-card h3 {
+    font-size: clamp(1.25rem, 3vw, 1.5rem);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.feature p,
+.solution-card p {
+    font-size: clamp(1rem, 2vw, 1.125rem);
+    line-height: 1.8;
+    color: var(--gray);
+    margin-bottom: 1.5rem;
+}
+
+.solution-card a {
+    color: var(--lilac);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.solution-card a:hover {
+    color: var(--lilac-dark);
+    text-decoration: underline;
+    text-decoration-thickness: 0.5px;
+}
+
+/* STATS SECTION */
 .stats-section {
     background: white;
     padding: 60px 20px;
@@ -311,7 +198,7 @@ nav {
     font-size: 1.1rem;
 }
 
-/* Testimonials Section */
+/* TESTIMONIALS */
 .testimonials-section {
     padding: 80px 20px;
     background: #f8f9fa;
@@ -343,9 +230,10 @@ nav {
     color: #2c3e50;
 }
 
-/* Partner Logos */
+/* PARTNER LOGOS */
 .partner-logos {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     gap: 60px;
     padding: 60px 0;
@@ -366,7 +254,72 @@ nav {
     filter: grayscale(0);
 }
 
-/* Footer */
+/* POLICY PAGES */
+.policy-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+}
+
+.policy-container h1 {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    font-weight: 700;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.policy-section {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--gray-light);
+}
+
+.policy-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.policy-section h2 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.policy-section p {
+    font-size: clamp(1rem, 2vw, 1.125rem);
+    color: var(--gray);
+    line-height: 1.8;
+    margin-bottom: 1rem;
+}
+
+.policy-section ul {
+    padding-left: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.policy-section li {
+    margin-bottom: 0.75rem;
+    color: var(--gray-dark);
+}
+
+.policy-section a {
+    color: var(--lilac);
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.policy-section a:hover {
+    color: var(--lilac-dark);
+    text-decoration: underline;
+    text-decoration-thickness: 0.5px;
+}
+
+/* FOOTER */
 footer {
     background: var(--lilac-dark);
     color: white;
@@ -376,7 +329,8 @@ footer {
     display: flex;
     justify-content: center;
     padding: 20px;
-    margin: 0 auto;
+    flex-wrap: wrap;
+    gap: 1.5rem;
 }
 
 .footerlink {
@@ -391,39 +345,30 @@ footer {
     color: var(--white);
 }
 
-/* Responsive Design */
+/* RESPONSIVE OVERRIDES */
 @media (max-width: 768px) {
-    .hero-section h1 {
+    .hero h1 {
         font-size: 2.5rem;
     }
 
-    .features-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
+    .features,
+    .solutions-list,
+    .stats-grid,
     .testimonials-grid {
         grid-template-columns: 1fr;
     }
+
+    .partner-logos {
+        gap: 30px;
+    }
 }
 
-/* Animations */
+/* ANIMATIONS */
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.feature-card, .stat-card, .testimonial-card {
+.feature, .stat-card, .testimonial-card {
     animation: fadeIn 0.6s ease-out forwards;
 }
-
-
