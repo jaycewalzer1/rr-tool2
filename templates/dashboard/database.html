@@ -3,28 +3,35 @@
 {% block dashboard_title %}Master Database - CRE: AI Solutions{% endblock %}
 
 {% block dashboard_content %}
-        <div class="card">
-            <h2>Your Master Database</h2>
-            {% if excel_file %}
-                <p>Your master Excel file has been generated:</p>
-                <a class="download-link" href="{{ url_for('dashboard.download_master_excel', filename=excel_file) }}">
-                    <hr>
-                <h3>Processed PDF Files:</h3>
-                {% if pdf_list %}
-                    <ul class="pdf-list">
-                        {% for pdf in pdf_list %}
-                            <li>{{ pdf }}</li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p>No PDFs have been uploaded yet.</p>
-                {% endif %}
+    <div class="card">
+        <h2>Your Master Database</h2>
+
+        {% if excel_file %}
+            <p>Your master Excel file has been generated:</p>
+            <a class="download-link" href="{{ url_for('dashboard.download_master_excel', filename=excel_file) }}">
+                Download Excel File
+            </a>
+
+            <div style="margin-top: 2rem;">
+                <h3>Excel Preview:</h3>
+                <div style="overflow-x: auto;">
+                    {{ table_html | safe }}
+                </div>
+            </div>
+
+            <hr>
+            <h3>Processed PDF Files:</h3>
+            {% if pdf_list %}
+                <ul class="pdf-list">
+                    {% for pdf in pdf_list %}
+                        <li>{{ pdf }}</li>
+                    {% endfor %}
+                </ul>
             {% else %}
-                <p>No database has been generated yet. Please upload PDFs in Marketing Materials to begin.</p>
+                <p>No PDFs have been uploaded yet.</p>
             {% endif %}
-        </div>
-    {% endblock %}
-
-
-
-
+        {% else %}
+            <p>No database has been generated yet. Please upload PDFs in Marketing Materials to begin.</p>
+        {% endif %}
+    </div>
+{% endblock %}
