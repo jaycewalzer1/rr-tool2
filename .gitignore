@@ -4,4 +4,6 @@ __pycache__
 pytest.ini
 .pytest_cache
 test_auth
-*instance
+*instanceflask_session/
+database1.log
+*.pdf
