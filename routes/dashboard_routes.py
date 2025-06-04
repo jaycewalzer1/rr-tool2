@@ -1,3 +1,4 @@
+from airtable import read_excel_from_s3
 from flask import Blueprint, render_template, redirect, url_for, request, flash, session, jsonify, send_file, session, abort
 import stripe
 from dotenv import load_dotenv
@@ -34,22 +35,34 @@ def database():
     user_id = session.get('user', {}).get('user_id')
     excel_key = f"uploads/{user_id}_master.xlsx"
 
-    # Check if file exists in S3
+    # Default values
+    excel_file = None
+    table_html = None
+
+    # Check if Excel file exists, and load + render it
     try:
         s3_client.head_object(Bucket=excel_bucket, Key=excel_key)
         excel_file = f"{user_id}_master.xlsx"
+        df = read_excel_from_s3(user_id)
+        df.dropna(how="all", inplace=True)
+        table_html = df.to_html(classes="table table-striped table-bordered", index=False)
     except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] in ['404', 'NoSuchKey']:
-            excel_file = None
-        else:
+        if e.response['Error']['Code'] not in ['404', 'NoSuchKey']:
             raise
+    except Exception as e:
+        print(f"Error reading Excel for user {user_id}: {e}")
 
-    # You can also get list of uploaded PDFs if needed
+    # Get list of uploaded PDFs
     pdf_prefix = f"uploads/{user_id}/"
     response = s3_client.list_objects_v2(Bucket=os.getenv('S3_BUCKET_NAME_PDF'), Prefix=pdf_prefix)
     pdf_list = [obj['Key'].split('/')[-1] for obj in response.get('Contents', []) if obj['Key'].endswith('.pdf')]
-    return render_template('dashboard/database.html', excel_file=excel_file, pdf_list=pdf_list)
 
+    return render_template(
+        'dashboard/database.html',
+        excel_file=excel_file,
+        pdf_list=pdf_list,
+        table_html=table_html
+    )
 
 @dashboard_bp.route('/files')
 @login_required
@@ -344,6 +357,10 @@ def handle_uploaded_file():
     try:
         # Call your OCR + Excel logic here
         result = process_uploaded_pdf(user_id, filename)
+
+        df = read_excel_from_s3(user_id)
+        push_to_airtable(df)
+
         return jsonify({
             'message': 'File processed successfully',
             'excel_key': result['excel_s3_key']
@@ -378,3 +395,17 @@ def download_master_excel(filename):
                 abort(404)
             else:
                 raise
+
+@dashboard_bp.route('/excel-preview')
+@login_required
+def excel_preview():
+    user_id = session['user']['user_id']
+    try:
+        df = read_excel_from_s3(user_id)
+
+        df.dropna(how='all', inplace=True)
+
+        table_html = df.to_html(classes="table table-striped table-bordered", index=False)
+        return render_template('dashboard/excel_preview.html', table_html=table_html)
+    except Exception as e:
+        return f"Failed to load Excel data: {str(e)}", 500
