@@ -297,11 +297,9 @@ def generate_presigned_upload_url():
 @dashboard_bp.route('/api/s3/files', methods=['GET'])
 @login_required
 def list_s3_files():
-
     s3 = boto3.client('s3')
     bucket = os.getenv('S3_BUCKET_NAME_PDF')
     user_id = session.get('user', {}).get('user_id')
-
     prefix = f'uploads/{user_id}/'
 
     try:
@@ -310,10 +308,18 @@ def list_s3_files():
 
         for obj in response.get('Contents', []):
             key = obj['Key']
-            filename = key.split('/')[-1]  # strip user folder
+            filename = key.split('/')[-1]
+
+            # Generate presigned GET URL (view in new tab)
+            presigned_url = s3.generate_presigned_url(
+                'get_object',
+                Params={'Bucket': bucket, 'Key': key},
+                ExpiresIn=3600  # 1 hour
+            )
             files.append({
                 'filename': filename,
                 's3_key': key,
+                'public_url': presigned_url,
                 'size': obj['Size'],
                 'last_modified': obj['LastModified'].isoformat()
             })
@@ -323,6 +329,7 @@ def list_s3_files():
     except Exception as e:
         print(f"Error listing files from S3: {str(e)}")
         return jsonify({'error': 'Could not list files'}), 500
+
     
 @dashboard_bp.route('/api/s3/files', methods=['POST'])
 @login_required
