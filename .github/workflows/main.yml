@@ -1,0 +1,81 @@
+name: Build and Deploy Docker App to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REGION: us-east-1
+  REPO: cre
+  IMAGE_TAG: latest
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.REGION }}
+
+      - name: Login to ECR
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          echo "ACCOUNT_ID=$ACCOUNT_ID" >> $GITHUB_ENV
+          aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
+
+      - name: Build, Tag, and Push Docker Image to ECR
+        run: |
+          docker build -t $REPO:$IMAGE_TAG .
+          docker tag $REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO:$IMAGE_TAG
+          docker push $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO:$IMAGE_TAG
+
+      - name: SSH into EC2 and Deploy Container + Run Tests
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            REGION=us-east-2
+            REPO=cre
+            IMAGE_TAG=latest
+            ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text --region $REGION)
+
+            # Install required tools
+            sudo apt update && sudo apt install -y awscli docker.io git python3 python3-pip
+
+            # Login and pull Docker image
+            aws ecr get-login-password --region $REGION | sudo docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
+            sudo docker pull $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO:$IMAGE_TAG
+
+            # Stop and remove existing container if running
+            RUNNING=$(sudo docker ps -q)
+            if [ -n "$RUNNING" ]; then
+              sudo docker stop $RUNNING
+              sudo docker rm $RUNNING
+            fi
+
+            # Run new container
+            sudo docker run -d -p 80:5000 --name cre_app $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO:$IMAGE_TAG
+
+            # Clone repo and run tests
+            if [ ! -d "rr-tool2" ]; then
+              git clone https://github.com/jaycewalzer1/rr-tool2.git
+            fi
+            cd rr-tool2
+
+            # Install Python dependencies (optional)
+            pip3 install -r requirements.txt
+
+            # Run tests
+            for file in tests/*.py; do
+              python3 "$file"
+            done
