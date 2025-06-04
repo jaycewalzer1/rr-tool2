@@ -1,151 +1,128 @@
-const stripe = Stripe("{{ publishable_key }}");
+console.log('Subscription script loaded');
 
-const urlParams = new URLSearchParams(window.location.search);
-const cancelled = urlParams.get('cancelled');
+// Test function to verify script is loaded
+window.subscriptionTest = function() {
+    console.log('Subscription test function called');
+    return 'Subscription script is loaded';
+};
 
-if (cancelled) {
-    flashMessage('Subscription cancelled.', 'info');
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    loadSubscriptionStatus();
-    loadPaymentHistory();
-});
-
-function flashMessage(message, type) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `flash-message ${type}`;
-    messageDiv.textContent = message;
-
-    const statusDiv = document.getElementById('subscription-status');
-    if (statusDiv) {
-        statusDiv.insertBefore(messageDiv, statusDiv.firstChild);
-
-        setTimeout(() => {
-            messageDiv.remove();
-        }, 5000);
+// Check if Stripe is loaded
+function initializeSubscription() {
+    if (window.stripeInitialized) return;
+    
+    // Wait for Stripe to load
+    if (typeof Stripe !== 'function') {
+        console.log('Stripe not loaded yet, retrying...');
+        setTimeout(initializeSubscription, 100);
+        return;
     }
-}
 
-async function loadSubscriptionStatus() {
-    try {
-        const response = await fetch('/subscription/status');
-        const data = await response.json();
+    // Get Stripe key from meta tag
+    const stripePublicKey = document.querySelector('meta[name="stripe-public-key"]');
+    if (!stripePublicKey) {
+        console.error('Stripe public key meta tag not found');
+        return;
+    }
 
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to load subscription status');
-        }
+    console.log('Found Stripe public key:', stripePublicKey.content);
+    if (!stripePublicKey.content) {
+        console.error('Stripe public key is empty');
+        return;
+    }
 
-        const statusDiv = document.getElementById('subscription-status');
-        if (!statusDiv) {
-            throw new Error('Subscription status container not found');
-        }
+    // Initialize Stripe
+    const stripe = Stripe(stripePublicKey.content);
+    console.log('Stripe initialized with key:', stripePublicKey.content);
 
-        if (data.error) {
-            statusDiv.innerHTML = `
-                <div class="status-item">
-                    <span class="label">Status:</span>
-                    <span class="value error">${data.error}</span>
-                </div>
-                <div class="status-item">
-                    <span class="label">Message:</span>
-                    <span class="value">${data.message || 'Unknown error'}</span>
-                </div>
-            `;
+    // Set flag to prevent reinitialization
+    window.stripeInitialized = true;
+
+    async function subscribe(planId) {
+        console.log('Subscribe called for plan:', planId);
+        const button = document.querySelector(`.plan-card[data-plan-id="${planId}"] .subscribe-btn`);
+        if (!button) {
+            console.error('Subscribe button not found for plan:', planId);
             return;
         }
 
-        const plan = data.plan || {};
-        statusDiv.innerHTML = `
-            <div class="status-item">
-                <span class="label">Status:</span>
-                <span class="value ${data.status === 'inactive' ? 'inactive' : ''}">${data.status}</span>
-            </div>
-            <div class="status-item">
-                <span class="label">Current Plan:</span>
-                <span class="value">${plan.nickname || 'None'}</span>
-            </div>
-            <div class="status-item">
-                <span class="label">Amount:</span>
-                <span class="value">${(plan.amount / 100).toFixed(2)} ${plan.currency?.toUpperCase() || 'USD'}</span>
-            </div>
-            <div class="status-item">
-                <span class="label">Next Billing Date:</span>
-                <span class="value">${data.current_period_end ? new Date(data.current_period_end * 1000).toLocaleDateString() : 'N/A'}</span>
-            </div>
-        `;
+        button.disabled = true;
+        button.textContent = 'Processing...';
 
-        document.querySelectorAll('.subscribe-btn').forEach(button => {
-            const planId = button.closest('.plan-card').dataset.planId;
-            if (plan.id === planId) {
-                button.textContent = 'Manage Subscription';
-                button.onclick = () => manageSubscription(planId);
-            } else {
-                button.textContent = 'Subscribe';
-                button.onclick = () => subscribe(planId);
+        try {
+            // Get user data from session
+            const response = await fetch('/api/user/check-session', {
+                credentials: 'include'
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Please log in to subscribe');
             }
-        });
-    } catch (error) {
-        console.error('Error loading subscription status:', error);
-        const statusDiv = document.getElementById('subscription-status');
-        if (statusDiv) {
-            statusDiv.innerHTML = `
-                <div class="status-item">
-                    <span class="label">Status:</span>
-                    <span class="value error">Error</span>
-                </div>
-                <div class="status-item">
-                    <span class="label">Message:</span>
-                    <span class="value">${error.message || 'Failed to load subscription status'}</span>
-                </div>
-            `;
-        }
-    }
-}
 
-async function manageSubscription(planId) {
-    try {
-        const { sessionId } = await fetch(`/manage-subscription/${planId}`).then(r => r.json());
-        await stripe.redirectToCheckout({ sessionId });
-    } catch (error) {
-        alert('Error managing subscription: ' + error.message);
-    }
-}
+            const userData = await response.json();
+            if (!userData.user) {
+                throw new Error('User data not found in session');
+            }
 
-async function subscribe(planId) {
-    try {
-        const button = document.querySelector(`.plan-card[data-plan-id="${planId}"] .subscribe-btn`);
-        if (button) {
-            button.disabled = true;
-            button.textContent = 'Processing...';
-        }
+            // Create checkout session
+            const checkoutResponse = await fetch(`/create-checkout-session/${planId}`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'include'
+            });
 
-        const response = await fetch(`/create-checkout-session/${planId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        });
+            if (!checkoutResponse.ok) {
+                const errorData = await checkoutResponse.json();
+                throw new Error(errorData.error || `HTTP ${checkoutResponse.status}: ${checkoutResponse.statusText}`);
+            }
 
-        const data = await response.json();
+            const data = await checkoutResponse.json();
+            if (!data.id) throw new Error('No checkout session ID returned');
 
-        if (!response.ok || data.error || !data.url) {
-            throw new Error(data.error || 'Checkout session creation failed.');
-        }
-
-        // Open Stripe Checkout in a new tab
-        window.open(data.url, '_blank');
-
-    } catch (error) {
-        console.error('Subscription error:', error);
-
-        const button = document.querySelector(`.plan-card[data-plan-id="${planId}"] .subscribe-btn`);
-        if (button) {
-            button.disabled = false;
+            console.log('Redirecting to checkout');
+            stripe.redirectToCheckout({ sessionId: data.id });
+        } catch (error) {
+            console.error('Subscription error:', error);
             button.textContent = 'Subscribe';
-
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message';
-            errorDiv.textContent = error.message || 'An error occurred.';
-            button.parentElement.insertBefore(errorDiv, button.nextSibling);
+            button.disabled = false;
+            alert(error.message || 'An error occurred while processing your subscription');
         }
     }
+
+    // Add event listeners to all subscribe buttons
+    const subscribeButtons = document.querySelectorAll('.subscribe-btn');
+    if (subscribeButtons.length === 0) {
+        console.error('No subscribe buttons found');
+        return;
+    }
+
+    subscribeButtons.forEach(button => {
+        const planId = button.closest('.plan-card').dataset.planId;
+        if (!planId) {
+            console.error('Plan ID not found on button:', button);
+            return;
+        }
+
+        button.addEventListener('click', async (e) => {
+            e.preventDefault();
+            console.log('Button clicked for plan:', planId);
+            await subscribe(planId);
+        });
+    });
+
+    // Handle cancellation message
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('cancelled')) {
+        console.log('Cancellation message shown');
+        alert('Subscription was cancelled.');
+    }
 }
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Document loaded, initializing subscription');
+    initializeSubscription();
+});

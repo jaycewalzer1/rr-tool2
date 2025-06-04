@@ -4,6 +4,40 @@ __pycache__
 pytest.ini
 .pytest_cache
 test_auth
+<<<<<<< Updated upstream
 *instanceflask_session/
 database1.log
 *.pdf
+=======
+*instance
+
+# Node
+node_modules/
+.npm
+.npmrc
+
+# Tailwind
+static/css/style.css
+static/css/style.css.map
+
+# Python
+*.py[cod]
+__pycache__/
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+>>>>>>> Stashed changes

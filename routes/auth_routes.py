@@ -46,7 +46,8 @@ def login():
             return redirect(url_for('auth.confirm_signup'))
 
         except cognito.exceptions.NotAuthorizedException:
-            flash('Invalid email or password!', 'danger')
+            flash('Your account is not confirmed. Please check your email for the confirmation code.', 'danger')
+            return redirect(url_for('auth.confirm_signup'))
 
         except cognito.exceptions.UserNotFoundException:
             flash('Email not found. Please sign up first!', 'danger')
@@ -70,33 +71,49 @@ def signup():
         password = form.password.data
 
         try:
+            # Create Cognito user immediately
             secret_hash = get_secret_hash(username, COGNITO_APP_CLIENT_ID)
-
-            cognito.sign_up(
+            response = cognito.sign_up(
                 ClientId=COGNITO_APP_CLIENT_ID,
                 Username=username,
                 Password=password,
+                SecretHash=secret_hash,
                 UserAttributes=[
                     {'Name': 'email', 'Value': email},
                     {'Name': 'phone_number', 'Value': phone_number},
                     {'Name': 'name', 'Value': name},
                     {'Name': 'preferred_username', 'Value': username}
-                ],
-                SecretHash=secret_hash
+                ]
             )
 
-            flash('Account created successfully! Check your email for the confirmation code.', 'success')
-            session['pending_confirmation_username'] = username
-            session['pending_confirmation_password'] = password
-            return redirect(url_for('auth.confirm_signup'))
+            # Store user data in session
+            session['pending_user_data'] = {
+                'name': name,
+                'username': username,
+                'email': email,
+                'phone_number': phone_number,
+                'password': password,
+                'cognito_user_id': response['UserSub']
+            }
+            
+            # Also set a temporary user object for session check
+            session['user'] = {
+                'email': email,
+                'username': username,
+                'status': 'pending_subscription'
+            }
+
+            # Redirect to subscription page
+            return redirect(url_for('dashboard.subscription'))
 
         except cognito.exceptions.UsernameExistsException:
-            flash('Username already exists!', 'danger')
-        except cognito.exceptions.InvalidPasswordException:
-            flash('Invalid password format.', 'danger')
+            flash('Username already exists. Please choose a different one.', 'danger')
+        except cognito.exceptions.InvalidParameterException as e:
+            print(f"Invalid parameter error: {str(e)}")
+            flash('Invalid signup parameters. Please check your input and try again.', 'danger')
         except Exception as e:
             print(f"Signup error: {str(e)}")
-            flash('Signup failed. Please try again!', 'danger')
+            flash('Error creating account. Please try again.', 'danger')
 
     return render_template('account/signup.html', form=form)
 
@@ -124,50 +141,64 @@ def resend_confirmation_code():
 
 @auth_bp.route('/confirm-signup', methods=['GET', 'POST'])
 def confirm_signup():
-    if 'pending_confirmation_username' not in session:
+    # Check if user has completed subscription
+    if request.args.get('subscription_completed'):
+        session['subscription_completed'] = True
+    elif 'subscription_completed' not in session or not session['subscription_completed']:
+        flash('Please complete your subscription first!', 'warning')
+        return redirect(url_for('dashboard.subscription'))
+
+    if 'pending_user_data' not in session:
         flash('Please sign up first!', 'danger')
         return redirect(url_for('auth.signup'))
 
     form = ConfirmForm()
     if form.validate_on_submit():
-        username = session['pending_confirmation_username']
-        password = session['pending_confirmation_password']
-        secret_hash = get_secret_hash(username, COGNITO_APP_CLIENT_ID)
-
+        username = session['pending_user_data']['username']
+        confirmation_code = form.confirmation_code.data
+        
         try:
+            secret_hash = get_secret_hash(username, COGNITO_APP_CLIENT_ID)
             cognito.confirm_sign_up(
                 ClientId=COGNITO_APP_CLIENT_ID,
                 Username=username,
-                ConfirmationCode=form.confirmation_code.data,
+                ConfirmationCode=confirmation_code,
                 SecretHash=secret_hash
             )
 
-            auth_response = cognito.admin_initiate_auth(
-                UserPoolId=COGNITO_USER_POOL_ID,
+            # Authenticate the user
+            auth_response = cognito.initiate_auth(
                 ClientId=COGNITO_APP_CLIENT_ID,
-                AuthFlow='ADMIN_NO_SRP_AUTH',
+                AuthFlow='USER_PASSWORD_AUTH',
                 AuthParameters={
                     'USERNAME': username,
-                    'PASSWORD': password,
+                    'PASSWORD': session['pending_user_data']['password'],
                     'SECRET_HASH': secret_hash
                 }
             )
 
+            # Set up session
             session['auth'] = {
-                'access_token': auth_response['AuthenticationResult']['AccessToken']
+                'access_token': auth_response['AuthenticationResult']['AccessToken'],
+                'refresh_token': auth_response['AuthenticationResult']['RefreshToken'],
+                'id_token': auth_response['AuthenticationResult']['IdToken']
             }
 
+            # Get user info
             response = cognito.get_user(AccessToken=session['auth']['access_token'])
             user_data = {attr['Name']: attr['Value'] for attr in response['UserAttributes']}
+            
             session['user'] = {
-                'username': username,
-                'email': user_data.get('email'),
-                'user_id': user_data.get('sub')
+                'email': user_data.get('email', ''),
+                'username': user_data.get('username', ''),
+                'user_id': user_data.get('sub', '')
             }
 
+            # Clean up temporary data
             cleanup_session()
+
             flash('Account confirmed and logged in successfully!', 'success')
-            return render_template('dashboard/files.html')
+            return redirect(url_for('auth.login'))
 
         except cognito.exceptions.ExpiredCodeException:
             flash('The confirmation code has expired.', 'warning')
@@ -177,6 +208,7 @@ def confirm_signup():
             print(f"Confirmation error: {str(e)}")
             flash('An error occurred. Please try again.', 'danger')
 
+    # If GET request or form validation failed, show the form
     return render_template('account/confirm_signup.html', form=form)
 
 

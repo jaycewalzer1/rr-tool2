@@ -8,43 +8,43 @@
             <h1>Login to Your Account</h1>
             <p>Welcome back. Enter your credentials to continue.</p>
         </div>
+            
+            <div class="flash-messages">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
 
-        <div class="flash-messages">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="flash-message {{ category }}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-        </div>
+            <form method="POST" action="{{ url_for('auth.login') }}">
+                {{ form.hidden_tag() }}
 
-        <form method="POST" action="{{ url_for('auth.login') }}">
-            {{ form.hidden_tag() }}
-
-            <div class="form-group">
+                <div class="form-group">
                 {{ form.email(class="form-input", placeholder="Email") }}
-                {% if form.email.errors %}
-                    <div class="error-message">
-                        {% for error in form.email.errors %}
+                    {% if form.email.errors %}
+                        <div class="error-message">
+                            {% for error in form.email.errors %}
                             <small>{{ error }}</small><br>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
 
-            <div class="form-group">
-                {{ form.password(class="form-input", placeholder="Password") }}
-                {% if form.password.errors %}
-                    <div class="error-message">
-                        {% for error in form.password.errors %}
+                <div class="form-group">
+                    {{ form.password(class="form-input", placeholder="Password") }}
+                    {% if form.password.errors %}
+                        <div class="error-message">
+                            {% for error in form.password.errors %}
                             <small>{{ error }}</small><br>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
 
             {{ form.submit(class="cta-button") }}
 

@@ -1,26 +1,17 @@
+<<<<<<< Updated upstream
 from airtable import read_excel_from_s3
 from flask import Blueprint, render_template, redirect, url_for, request, flash, session, jsonify, send_file, session, abort
+=======
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, session
+from models import User, db
+from decorators import verify_account, login_required
+>>>>>>> Stashed changes
 import stripe
-from dotenv import load_dotenv
 import os
 from datetime import datetime
-from flask import Flask, request
-import boto3
-from db_handler import process_uploaded_pdf
-import botocore.exceptions
-import tempfile
 
-
-load_dotenv()
-STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
-STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
-stripe.api_key = STRIPE_SECRET_KEY
-from decorators import login_required, verify_account
-
+# Create Blueprint
 dashboard_bp = Blueprint('dashboard', __name__)
-
-s3_client = boto3.client('s3')
-excel_bucket = os.getenv('S3_BUCKET_NAME_EXCEL')
 
 @dashboard_bp.route('/dashboard')
 @login_required
@@ -32,6 +23,7 @@ def dashboard():
 @login_required
 @verify_account
 def database():
+<<<<<<< Updated upstream
     user_id = session.get('user', {}).get('user_id')
     excel_key = f"uploads/{user_id}_master.xlsx"
 
@@ -63,6 +55,9 @@ def database():
         pdf_list=pdf_list,
         table_html=table_html
     )
+=======
+    return render_template('dashboard/database.html')
+>>>>>>> Stashed changes
 
 @dashboard_bp.route('/files')
 @login_required
@@ -71,10 +66,17 @@ def files():
     return render_template('dashboard/files.html')
 
 @dashboard_bp.route('/subscription')
-@login_required
-@verify_account
 def subscription():
-    return render_template('dashboard/subscription.html', publishable_key=STRIPE_PUBLIC_KEY)
+    # Check if user is pending subscription
+    if 'user' in session and session['user'].get('status') == 'pending_subscription':
+        publishable_key = os.getenv('STRIPE_PUBLIC_KEY')
+        print(f"Stripe public key: {publishable_key}")  # Debug print
+        return render_template('account/subscription.html', publishable_key=publishable_key)
+    
+    # For logged-in users
+    publishable_key = os.getenv('STRIPE_PUBLIC_KEY')
+    print(f"Stripe public key: {publishable_key}")  # Debug print
+    return render_template('account/subscription.html', publishable_key=publishable_key)
 
 @dashboard_bp.route('/gmaps')
 @login_required
@@ -83,8 +85,6 @@ def gmaps():
     return render_template('dashboard/gmaps.html')
 
 @dashboard_bp.route('/subscription/status')
-@login_required
-@verify_account
 def subscription_status():
     try:
         # Get user email from session
@@ -134,8 +134,6 @@ def subscription_status():
         return jsonify(error=str(e)), 500
 
 @dashboard_bp.route('/payment/history')
-@login_required
-@verify_account
 def payment_history():
     try:
         # Get user email from session
@@ -161,6 +159,7 @@ def payment_history():
         return jsonify(error="Customer not found"), 404
     except Exception as e:
         return jsonify(error=str(e)), 500
+<<<<<<< Updated upstream
 
 
 
@@ -409,3 +408,5 @@ def excel_preview():
         return render_template('dashboard/excel_preview.html', table_html=table_html)
     except Exception as e:
         return f"Failed to load Excel data: {str(e)}", 500
+=======
+>>>>>>> Stashed changes

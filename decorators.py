@@ -2,9 +2,6 @@ from functools import wraps
 from flask import session, redirect, flash, url_for
 from auth import cognito, COGNITO_APP_CLIENT_ID
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 COGNITO_REGION = os.getenv("AWS_REGION")
 COGNITO_USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID")

@@ -1,16 +1,17 @@
-/* Form Styles */
+/* FORM STYLES */
 .form-group {
     margin-bottom: 1.5rem;
 }
 
 .form-input {
     width: 100%;
-    padding: 0.8rem;
+    padding: clamp(0.75rem, 2vw, 1rem);
     border: 1px solid var(--gray-light);
     border-radius: var(--radius-md);
-    font-size: 0.95rem;
+    font-size: clamp(0.9rem, 2vw, 1rem);
     transition: all 0.3s ease;
     box-shadow: 0 0 0 2px transparent;
+    background-color: var(--white);
 }
 
 .form-input:focus {
@@ -19,21 +20,26 @@
     box-shadow: 0 0 0 2px var(--lilac);
 }
 
-h2 {
+/* HEADINGS (Scoped or Shared) */
+h2, .form-header {
     font-size: clamp(1.8rem, 4vw, 2.5rem);
     font-weight: 800;
     text-decoration: underline;
     text-underline-offset: 4px;
     text-decoration-color: var(--lilac);
     margin-bottom: 1.5rem;
+    color: var(--black);
 }
 
+/* LINK STYLES WITHIN FORM CONTEXT */
 .form-text a {
     color: var(--lilac);
     text-decoration: none;
+    font-weight: 500;
     transition: all 0.3s ease;
 }
 
 .form-text a:hover {
     text-decoration: underline;
+    font-weight: 600;
 }
