@@ -20,3 +20,4 @@ boto3==1.29.0
 botocore==1.32.0
 PyMuPDF==1.24.1
 pytesseract==0.3.10
+gunicorn==21.2.0
