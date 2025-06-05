@@ -94,9 +94,7 @@ jobs:
             sleep 5
             if ! sudo docker ps | grep -q cre_app; then
               echo "❌ Container failed to start"
+              echo "Container logs:"
+              sudo docker logs cre_app || echo "No logs found"
               exit 1
             fi
-
-            echo "Fetching logs:"
-            sudo docker logs cre_app
-
