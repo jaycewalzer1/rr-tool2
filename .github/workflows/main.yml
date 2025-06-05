@@ -90,3 +90,9 @@ jobs:
                 python3 "$file"
               done
             fi
+
+            sleep 5
+            if ! sudo docker ps | grep -q cre_app; then
+              echo "❌ Container failed to start"
+              exit 1
+            fi
