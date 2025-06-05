@@ -113,7 +113,7 @@
         
             async function loadFiles() {
                 const filesList = document.getElementById('filesList');
-                const res = await fetch('/api/local/files');
+                const res = await fetch('/api/s3/files');
                 const data = await res.json();
                 filesList.innerHTML = '';
                 data.files.forEach(file => {

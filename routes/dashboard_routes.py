@@ -8,8 +8,7 @@ from datetime import datetime
 import boto3
 import botocore
 import tempfile
-from airtable import read_excel_from_s3, push_to_airtable
-from your_ocr_module import process_uploaded_pdf
+from db_handler import process_uploaded_pdf
 
 s3_client = boto3.client('s3')
 excel_bucket = os.getenv('S3_BUCKET_NAME_EXCEL')
@@ -320,6 +319,12 @@ def list_s3_files():
         print(f"Error listing files from S3: {str(e)}")
         return jsonify({'error': 'Could not list files'}), 500
 
+@dashboard_bp.route('/files')
+@login_required
+@verify_account
+def files():
+    return render_template('dashboard/files.html')
+
     
 @dashboard_bp.route('/api/s3/files', methods=['POST'])
 @login_required
@@ -336,8 +341,6 @@ def handle_uploaded_file():
         result = process_uploaded_pdf(user_id, filename)
 
         df = read_excel_from_s3(user_id)
-        push_to_airtable(df)
-
         return jsonify({
             'message': 'File processed successfully',
             'excel_key': result['excel_s3_key']
