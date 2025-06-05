@@ -3,7 +3,6 @@
 {% block dashboard_title %}Master Database - CRE: AI Solutions{% endblock %}
 
 {% block dashboard_content %}
-<<<<<<< Updated upstream
     <div class="card">
         <h2>Your Master Database</h2>
 
@@ -28,24 +27,6 @@
                         <li>{{ pdf }}</li>
                     {% endfor %}
                 </ul>
-=======
-        <div class="card">
-            <h2>Your Master Database</h2>
-            {% if excel_file %}
-                <p>Your master Excel file has been generated:</p>
-                <a class="download-link" href="{{ url_for('download_master_excel', filename=excel_file) }}" target="_blank">{{ excel_file }}</a>
-                <hr>
-                <h3>Processed PDF Files:</h3>
-                {% if pdf_list %}
-                    <ul class="pdf-list">
-                        {% for pdf in pdf_list %}
-                            <li>{{ pdf }}</li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p>No PDFs have been uploaded yet.</p>
-                {% endif %}
->>>>>>> Stashed changes
             {% else %}
                 <p>No PDFs have been uploaded yet.</p>
             {% endif %}
