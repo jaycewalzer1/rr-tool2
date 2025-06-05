@@ -4,11 +4,9 @@ __pycache__
 pytest.ini
 .pytest_cache
 test_auth
-<<<<<<< Updated upstream
 *instanceflask_session/
 database1.log
 *.pdf
-=======
 *instance
 
 # Node
