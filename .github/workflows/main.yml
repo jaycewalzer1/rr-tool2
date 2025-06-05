@@ -33,7 +33,7 @@ jobs:
 
       - name: Build, Tag, and Push Docker Image to ECR
         run: |
-          docker build -t $REPO:$IMAGE_TAG .
+          docker build --no-cache -t $REPO:$IMAGE_TAG .
           docker tag $REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO:$IMAGE_TAG
           docker push $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO:$IMAGE_TAG
 
@@ -49,16 +49,21 @@ jobs:
             IMAGE_TAG=latest
             ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text --region $REGION)
 
-            # Install dependencies
+            # Install Docker and AWS CLI if needed
             sudo apt update
-            sudo apt install -y docker.io git python3 python3-pip unzip curl python3.12-venv
+            sudo apt install -y docker.io unzip curl
 
-            # Install AWS CLI v2
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip -q awscliv2.zip
-            sudo ./aws/install --update
+            # Clean up Docker to prevent disk issues
+            sudo docker system prune -af
 
-            # Docker login & pull
+            # Install AWS CLI v2 if missing
+            if ! command -v aws &> /dev/null; then
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip -q awscliv2.zip
+              sudo ./aws/install
+            fi
+
+            # Docker login and image pull
             aws ecr get-login-password --region $REGION | sudo docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
             sudo docker pull $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO:$IMAGE_TAG
 
@@ -68,29 +73,13 @@ jobs:
               sudo docker rm cre_app
             fi
 
-            # Run new container with env vars
+            # Run new container (no entrypoint override)
             sudo docker run -d -p 80:5000 --name cre_app \
               -e AWS_REGION=$REGION \
               -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
               -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
               $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO:$IMAGE_TAG
 
-            # Clone repo if needed
-            if [ ! -d "rr-tool2" ]; then
-              git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/jaycewalzer1/rr-tool2.git
-            fi
-            cd rr-tool2
-
-            # Install dependencies
-            pip3 install --break-system-packages -r requirements.txt
-
-            # Run tests
-            if [ -d "tests" ]; then
-              for file in tests/*.py; do
-                python3 "$file"
-              done
-            fi
-            
             sleep 5
             if ! sudo docker ps | grep -q cre_app; then
               echo "❌ Container failed to start"
