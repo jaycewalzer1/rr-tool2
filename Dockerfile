@@ -4,20 +4,21 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-# Set working dir
+# Set working directory
 WORKDIR /app
 
-# Copy static files first for better cache
+# Copy static assets (for better caching)
 COPY static/ ./static/
 
-# Install Python deps
+# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copy app code
+# Copy full app source
 COPY . .
 
+# Expose port
 EXPOSE 5000
 
-# Run Gunicorn using the app object defined in app.py
+# Use Gunicorn in production
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
