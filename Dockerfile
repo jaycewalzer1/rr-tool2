@@ -3,7 +3,7 @@ FROM python:3.11-slim
 # Environment settings
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    FLASK_APP=app.py \
+    FLASK_APP=app:create_app \
     FLASK_RUN_HOST=0.0.0.0
 
 # Set working directory
