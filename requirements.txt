@@ -22,3 +22,4 @@ PyMuPDF==1.24.1
 pytesseract==0.3.10
 gunicorn==21.2.0
 pandas
+openpyxl
