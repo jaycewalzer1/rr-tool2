@@ -106,9 +106,10 @@ jobs:
           
             echo "🔍 Checking container health..."
             if ! sudo docker ps | grep -q cre_app; then
-              echo "❌ Container failed to start. Fetching logs:"
-              sudo docker logs cre_app || echo "⚠️ No logs found"
+              echo "❌ Container failed to start. Dumping logs:"
+              LOG_OUTPUT=$(sudo docker logs cre_app 2>&1)
+              echo "$LOG_OUTPUT"
+              echo "::error::Container failed to start. See logs above for details."
               exit 1
             fi
-          
-            echo "✅ Deployment complete. App is running!"
+
