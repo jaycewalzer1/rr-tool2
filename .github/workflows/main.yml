@@ -53,33 +53,38 @@ jobs:
             sudo apt update
             sudo apt install -y docker.io git python3 python3-pip unzip curl
             
-            # Install AWS CLI v2 (works on Ubuntu 24.04+)
+            # Install AWS CLI v2
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             unzip -q awscliv2.zip
-            sudo ./aws/install
+            sudo ./aws/install --update
             
-            # Login and pull image
+            # Docker login & pull
             aws ecr get-login-password --region $REGION | sudo docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
             sudo docker pull $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO:$IMAGE_TAG
             
-            # Stop and remove any running container
-            RUNNING=$(sudo docker ps -q)
-            if [ -n "$RUNNING" ]; then
-              sudo docker stop $RUNNING
-              sudo docker rm $RUNNING
+            # Kill existing container
+            if sudo docker ps -a --format '{{.Names}}' | grep -Eq '^cre_app$'; then
+              sudo docker stop cre_app
+              sudo docker rm cre_app
             fi
             
-            # Run container
+            # Run new container
             sudo docker run -d -p 80:5000 --name cre_app $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO:$IMAGE_TAG
             
-            # Clone repo and run tests
+            # Clone repo
             if [ ! -d "rr-tool2" ]; then
-              git clone https://github.com/jaycewalzer1/rr-tool2.git
+              git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/jaycewalzer1/rr-tool2.git
             fi
             cd rr-tool2
-            pip3 install -r requirements.txt
+            
+            # Install dependencies
+            python3 -m venv venv
+            source venv/bin/activate
+            pip install -r requirements.txt
             
             # Run tests
-            for file in tests/*.py; do
-              python3 "$file"
-            done
+            if [ -d "tests" ]; then
+              for file in tests/*.py; do
+                python "$file"
+              done
+            fi
