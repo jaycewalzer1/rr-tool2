@@ -2,9 +2,7 @@ FROM python:3.11-slim
 
 # Prevent .pyc files and force stdout logs
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    FLASK_RUN_HOST=0.0.0.0 \
-    FLASK_APP=app:create_app
+    PYTHONUNBUFFERED=1
 
 # Set working dir
 WORKDIR /app
@@ -21,4 +19,5 @@ COPY . .
 
 EXPOSE 5000
 
+# Run Gunicorn using the app object defined in app.py
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
