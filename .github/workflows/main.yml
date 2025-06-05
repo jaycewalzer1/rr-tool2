@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 env:
   REGION: us-east-2
@@ -13,6 +14,7 @@ env:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
@@ -44,57 +46,69 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            set -e  # Exit on any failure
+          
+            echo "🚀 Starting EC2 deployment script..."
+          
             REGION=us-east-2
             REPO=cre
             IMAGE_TAG=latest
+          
+            echo "📦 Checking/installing Docker and AWS CLI..."
+            sudo apt update -y
+            timeout 3m sudo apt install -y docker.io unzip curl > /dev/null
+          
+            echo "🧹 Pruning Docker to free space..."
+            sudo docker system prune -af || true
+          
+            if ! aws --version | grep -q aws-cli; then
+              echo "⬇️ Installing AWS CLI v2..."
+              curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip -q awscliv2.zip && sudo ./aws/install && rm -rf aws awscliv2.zip
+              echo "✅ AWS CLI installed"
+            else
+              echo "✅ AWS CLI already installed"
+            fi
+          
+            echo "🔑 Authenticating to ECR..."
             ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text --region $REGION)
-
-            # Install Docker and AWS CLI if needed
-            sudo apt update
-            sudo apt install -y docker.io unzip curl
-
-            # Clean up Docker to prevent disk issues
-            sudo docker system prune -af
-
-            # Install AWS CLI v2 if missing
-            if ! command -v aws &> /dev/null; then
-              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-              unzip -q awscliv2.zip
-              sudo ./aws/install
-            fi
-
-            # Docker login and image pull
             aws ecr get-login-password --region $REGION | sudo docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
+          
+            echo "📥 Pulling latest Docker image..."
             sudo docker pull $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO:$IMAGE_TAG
-
-            # Kill existing container
+          
+            echo "🛑 Stopping and removing existing container (if any)..."
             if sudo docker ps -a --format '{{.Names}}' | grep -Eq '^cre_app$'; then
-              sudo docker stop cre_app
-              sudo docker rm cre_app
+              sudo docker stop cre_app || true
+              sudo docker rm cre_app || true
             fi
-
-            # Run new container (no entrypoint override)
+          
+            echo "🚀 Starting new container..."
             sudo docker run -d -p 80:5000 --name cre_app \
-            -e AWS_REGION=${{ secrets.AWS_REGION }} \
-            -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-            -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-            -e COGNITO_USER_POOL_ID=${{ secrets.COGNITO_USER_POOL_ID }} \
-            -e COGNITO_APP_CLIENT_ID=${{ secrets.COGNITO_APP_CLIENT_ID }} \
-            -e COGNITO_APP_CLIENT_SECRET=${{ secrets.COGNITO_APP_CLIENT_SECRET }} \
-            -e S3_BUCKET_NAME_PDF=${{ secrets.S3_BUCKET_NAME_PDF }} \
-            -e S3_BUCKET_NAME_EXCEL=${{ secrets.S3_BUCKET_NAME_EXCEL }} \
-            -e S3_REGION=${{ secrets.S3_REGION }} \
-            -e STRIPE_PUBLIC_KEY=${{ secrets.STRIPE_PUBLIC_KEY }} \
-            -e STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }} \
-            -e STRIPE_PROD_ID_BASIC=${{ secrets.STRIPE_PROD_ID_BASIC }} \
-            -e STRIPE_PRICE_ID_BASIC=${{ secrets.STRIPE_PRICE_ID_BASIC }} \
-            -e GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }} \
-            $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO:$IMAGE_TAG
-
+              -e AWS_REGION=${{ secrets.AWS_REGION }} \
+              -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+              -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+              -e COGNITO_USER_POOL_ID=${{ secrets.COGNITO_USER_POOL_ID }} \
+              -e COGNITO_APP_CLIENT_ID=${{ secrets.COGNITO_APP_CLIENT_ID }} \
+              -e COGNITO_APP_CLIENT_SECRET=${{ secrets.COGNITO_APP_CLIENT_SECRET }} \
+              -e S3_BUCKET_NAME_PDF=${{ secrets.S3_BUCKET_NAME_PDF }} \
+              -e S3_BUCKET_NAME_EXCEL=${{ secrets.S3_BUCKET_NAME_EXCEL }} \
+              -e S3_REGION=${{ secrets.S3_REGION }} \
+              -e STRIPE_PUBLIC_KEY=${{ secrets.STRIPE_PUBLIC_KEY }} \
+              -e STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }} \
+              -e STRIPE_PROD_ID_BASIC=${{ secrets.STRIPE_PROD_ID_BASIC }} \
+              -e STRIPE_PRICE_ID_BASIC=${{ secrets.STRIPE_PRICE_ID_BASIC }} \
+              -e GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }} \
+              $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO:$IMAGE_TAG
+          
+            echo "⏳ Waiting for container to start..."
             sleep 5
+          
+            echo "🔍 Checking container health..."
             if ! sudo docker ps | grep -q cre_app; then
-              echo "❌ Container failed to start"
-              echo "Container logs:"
-              sudo docker logs cre_app || echo "No logs found"
+              echo "❌ Container failed to start. Fetching logs:"
+              sudo docker logs cre_app || echo "⚠️ No logs found"
               exit 1
             fi
+          
+            echo "✅ Deployment complete. App is running!"
