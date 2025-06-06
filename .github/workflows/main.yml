@@ -102,11 +102,14 @@ jobs:
             sleep 5
 
             echo "🔍 Verifying container status..."
-            if ! sudo docker ps | grep -q cre_app; then
-              echo "⚠️ cre_app failed to start. Here's the log output:"
-              LOG_OUTPUT=$(sudo docker logs cre_app 2>&1)
-              echo "$LOG_OUTPUT"
-              echo "::warning::Container failed to start. Deployment succeeded but service is down."
+            if ! sudo docker ps --format '{{.Names}}' | grep -q '^cre_app$'; then
+              echo "❌ cre_app container is not running. Dumping logs:"
+              sudo docker logs cre_app || echo "⚠️ No logs found"
+              echo "::error::Container failed to start. Deployment aborted."
+              exit 1
             else
+              echo "✅ Container is running normally."
+            fi
+
               echo "✅ Container is running normally."
             fi
