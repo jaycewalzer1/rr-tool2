@@ -110,6 +110,3 @@ jobs:
             else
               echo "✅ Container is running normally."
             fi
-
-              echo "✅ Container is running normally."
-            fi
