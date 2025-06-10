@@ -3,9 +3,19 @@
 {% block dashboard_title %}Google Maps - CRE: AI Solutions{% endblock %}
 
 {% block extra_scripts %}
+    <!-- Define initMap inline so it's globally available BEFORE Maps API loads -->
+    <script>
+        window.initMap = function () {
+            if (typeof initializeMap === 'function') {
+                initializeMap();
+            }
+        };
+    </script>
+
+    <script src="{{ url_for('static', filename='js/gmaps.js') }}"></script>    <!-- Load the Maps API after defining `initMap` -->
     <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=places&callback=initMap"></script>
-    <script src="{{ url_for('static', filename='js/gmaps.js') }}"></script>
 {% endblock %}
+
 
 {% block dashboard_content %}
     <div class="map-container">

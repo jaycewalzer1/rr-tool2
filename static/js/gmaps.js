@@ -1,11 +1,10 @@
 let map;
 let markers = [];
 
-window.initMap = function () {
-    // Initialize the map centered on the United States
+function initializeMap() {
     map = new google.maps.Map(document.getElementById('map'), {
         zoom: 4,
-        center: { lat: 37.0902, lng: -95.7129 }, // Center of USA
+        center: { lat: 37.0902, lng: -95.7129 },
         styles: [
             {
                 "featureType": "administrative",
@@ -118,15 +117,13 @@ window.initMap = function () {
         ]
     });
 
-    // Add event listener for form submission
     const form = document.getElementById('addressForm');
     form.addEventListener('submit', handleAddressSubmit);
 
-    // Add autocomplete to the address input
     const input = document.getElementById('addressInput');
     const autocomplete = new google.maps.places.Autocomplete(input);
     autocomplete.bindTo('bounds', map);
-};
+}
 
 function handleAddressSubmit(e) {
     e.preventDefault();
