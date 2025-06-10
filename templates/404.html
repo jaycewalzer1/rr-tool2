@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Page Not Found - CRE: AI Solutions
+{% endblock %}
+
+{% block content %}
+    <div class="error-container">
+        <h1>404</h1>
+        <p>Sorry, the page you're looking for doesn't exist.</p>
+        <a href="{{ url_for('misc.home') }}" class="back-button">Back to Home</a>
+    </div>
+{% endblock %}
