@@ -43,7 +43,6 @@ wheels/
 app.db
 flask_session/
 flask_session/
-tenant_parser/data/
 flask_session/
 ecr.pem
 .env
