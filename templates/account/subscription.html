@@ -1,0 +1,29 @@
+{% extends "account.html" %}
+
+{% block account_content %}
+<div class="subscription-container">
+    <div class="subscription-header">
+        <h2>Subscription Management</h2>
+        <p>Purchase a plan to access all features of the tool</p>
+    </div>
+
+    <div class="plan-grid">
+        <div class="plan-card" data-plan-id="basic">
+            <div class="plan-header">
+                <h3>Basic Plan</h3>
+                <span class="price">$9.99/month</span>
+            </div>
+            <div class="plan-features">
+                <p>Access to all mapping and analysis tools</p>
+            </div>
+            <button class="subscribe-btn" onclick="console.log('Button clicked!');">Subscribe</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script src="https://js.stripe.com/v3/" crossorigin="anonymous"></script>
+    <meta name="stripe-public-key" content="{{ publishable_key }}">
+    <script src="{{ url_for('static', filename='js/subscription.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "dashboard_wrapper.html" %}
+
+{% block dashboard_title %}Google Maps - CRE: AI Solutions{% endblock %}
+
+{% block extra_scripts %}
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=places&callback=initMap"></script>
+    <script src="{{ url_for('static', filename='js/gmaps.js') }}"></script>
+{% endblock %}
+
+{% block dashboard_content %}
+    <div class="map-container">
+        <div class="search-container">
+            <form id="addressForm">
+                <input type="text" id="addressInput" placeholder="Enter an address...">
+                <button type="submit">Add Marker</button>
+            </form>
+        </div>
+        <div id="map" style="height: 600px; width: 100%;"></div>
+    </div>
+{% endblock %}
+
+{% block extra_styles %}
+    <style>
+        .map-container {
+            margin-top: 20px;
+        }
+        .search-container {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        #addressForm {
+            display: flex;
+            gap: 10px;
+        }
+        #addressInput {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        #addressForm button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #addressForm button:hover {
+            background-color: #45a049;
+        }
+    </style>
+{% endblock %}

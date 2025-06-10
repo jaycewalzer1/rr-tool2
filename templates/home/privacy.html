@@ -1,0 +1,54 @@
+{% extends "main_layout.html" %}
+
+{% block title %}Privacy Policy - CRE: AI Solutions{% endblock %}
+
+{% block main_content %}
+    <div class="legal-container">
+        <h1>Privacy Policy</h1>
+
+        <div class="legal-section">
+            <h2>1. Introduction</h2>
+            <p>CRE: AI Solutions is committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our services.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2>2. Information We Collect</h2>
+            <ul>
+                <li>Personal Information (name, email, contact details)</li>
+                <li>Usage Data (how you interact with our platform)</li>
+                <li>Payment Information (for subscription services)</li>
+                <li>Technical Information (device details, IP address)</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>3. How We Use Your Information</h2>
+            <ul>
+                <li>To provide and maintain our services</li>
+                <li>To improve our services and develop new features</li>
+                <li>To communicate with you about our services</li>
+                <li>To process payments and manage subscriptions</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>4. Your Rights</h2>
+            <ul>
+                <li>Right to access your data</li>
+                <li>Right to correct your data</li>
+                <li>Right to delete your data</li>
+                <li>Right to object to processing</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2>5. Contact Us</h2>
+            <p>If you have any questions about this Privacy Policy, please contact us at:</p>
+            <p><a href="mailto:privacy@creaisolutions.com">privacy@creaisolutions.com</a></p>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}">
+{% endblock %}

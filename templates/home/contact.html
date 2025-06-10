@@ -1,0 +1,22 @@
+{% extends "main_layout.html" %}
+
+{% block title %}Contact Us - CRE: AI Solutions{% endblock %}
+
+{% block main_content %}
+    <div class="legal-container">
+        <h1>Contact Us</h1>
+
+        <div class="legal-section">
+            <h2>General Inquiries</h2>
+            <ul>
+                <li>Email: <a href="mailto:jaycewalzer@gmail.com">jaycewalzer@gmail.com</a></li>
+                <li>Phone: +1 (858) 265-9936</li>
+            </ul>
+        </div>
+
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}">
+{% endblock %}

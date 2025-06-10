@@ -1,0 +1,20 @@
+{% extends "dashboard_wrapper.html" %}
+
+{% block dashboard_content %}
+<div class="manage-membership">
+    <div class="section-header">
+        <h2>Manage Your Subscription</h2>
+    </div>
+
+    <div class="subscription-actions">
+        <div class="action-card">
+            <h4>Cancel Subscription</h4>
+            <p>End your subscription at the end of the current billing cycle</p>
+            <button class="action-btn danger" onclick="cancelSubscription()">Cancel Subscription</button>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/subscription.js') }}"></script>
+<script src="{{ url_for('static', filename='js/manage_membership.js') }}"></script>
+{% endblock %}
