@@ -3,6 +3,9 @@ from forms import LoginForm, SignupForm, ResetPasswordForm, ConfirmForm, Confirm
 from auth import authenticate, get_secret_hash
 from auth import cognito, COGNITO_USER_POOL_ID, COGNITO_APP_CLIENT_ID
 from utils import cleanup_session
+import stripe
+import traceback
+
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -70,9 +73,14 @@ def signup():
         phone_number = f"+1{form.phone_number.data}"
         password = form.password.data
 
+        print(f"Signup attempt: Username={username}, Email={email}, Phone={phone_number}")
+        print(f"Session before Cognito signup: {dict(session)}")
+
         try:
             # Create Cognito user immediately
             secret_hash = get_secret_hash(username, COGNITO_APP_CLIENT_ID)
+            print(f"Generated secret hash for user {username}")
+            
             response = cognito.sign_up(
                 ClientId=COGNITO_APP_CLIENT_ID,
                 Username=username,
@@ -85,6 +93,9 @@ def signup():
                     {'Name': 'preferred_username', 'Value': username}
                 ]
             )
+            
+            print(f"Cognito signup response: {response}")
+            print(f"Cognito user ID: {response['UserSub']}")
 
             # Store user data in session
             session['pending_user_data'] = {
@@ -95,6 +106,7 @@ def signup():
                 'password': password,
                 'cognito_user_id': response['UserSub']
             }
+            print(f"Stored pending user data in session: {session['pending_user_data']}")
             
             # Also set a temporary user object for session check
             session['user'] = {
@@ -102,17 +114,21 @@ def signup():
                 'username': username,
                 'status': 'pending_subscription'
             }
+            print(f"Set temporary user object: {session['user']}")
 
             # Redirect to subscription page
+            print("Redirecting to subscription page")
             return redirect(url_for('dashboard.subscription'))
 
         except cognito.exceptions.UsernameExistsException:
+            print(f"Username {username} already exists")
             flash('Username already exists. Please choose a different one.', 'danger')
         except cognito.exceptions.InvalidParameterException as e:
             print(f"Invalid parameter error: {str(e)}")
             flash('Invalid signup parameters. Please check your input and try again.', 'danger')
         except Exception as e:
             print(f"Signup error: {str(e)}")
+            print(f"Full traceback: {traceback.format_exc()}")
             flash('Error creating account. Please try again.', 'danger')
 
     return render_template('account/signup.html', form=form)
