@@ -3,7 +3,6 @@
 {% block dashboard_title %}Google Maps - CRE: AI Solutions{% endblock %}
 
 {% block extra_scripts %}
-    <!-- Define initMap inline BEFORE Maps API loads -->
     <script>
         window.initMap = function () {
             if (typeof initializeMap === 'function') {
@@ -12,22 +11,19 @@
         };
     </script>
 
-    <!-- Load your JS -->
     <script src="{{ url_for('static', filename='js/gmaps.js') }}"></script>
 
-    <!-- Load Google Maps JS API -->
     <script
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAf-BOMf4RE26r8XenLvtLBHkUnB9DHAQM&libraries=places&callback=initMap"
       async
       defer>
     </script>
 
-
-    <!-- Load Web Components for Place Autocomplete -->
+    <!-- Web Components loader -->
     <script 
-        type="module" src="https://maps.googleapis.com/maps/api/plus/js">
+        type="module"
+        src="https://unpkg.com/@googlemaps/extended-component-library@0.15.0/dist/loader.js">
     </script>
-
 {% endblock %}
 
 {% block dashboard_content %}
