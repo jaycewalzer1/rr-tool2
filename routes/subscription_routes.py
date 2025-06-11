@@ -3,6 +3,7 @@ import stripe
 import os
 from datetime import datetime
 from decorators import login_required, verify_account
+import traceback
 
 STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
@@ -308,49 +309,81 @@ def manage_membership():
 @subscription_bp.route('/subscription/create', methods=['POST'])
 def create_subscription():
     try:
+        print("\n=== SUBSCRIPTION CREATION START ===")
+        print(f"Request data: {request.json}")
+        print(f"Session data: {dict(session)}")
+        
         # Get plan ID from request
         plan_id = request.json.get('plan_id')
+        print(f"Received plan_id: {plan_id}")
+        
         if not plan_id:
+            print("Error: Plan ID is missing")
             return jsonify({'error': 'Plan ID is required'}), 400
 
         # Get user data from session
         user_data = session.get('pending_user_data')
+        print(f"Retrieved user_data from session: {user_data}")
+        
         if not user_data:
+            print("Error: User data not found in session")
             return jsonify({'error': 'User data not found in session'}), 400
 
         # Create or retrieve Stripe customer
+        print(f"Attempting to find existing customer for email: {user_data['email']}")
         try:
             # Try to get existing customer
-            customer = stripe.Customer.list(email=user_data['email']).data[0]
-        except IndexError:
-            # Create new customer
-            customer = stripe.Customer.create(
-                email=user_data['email'],
-                name=user_data['name'],
-                phone=user_data['phone_number'],
-                metadata={
-                    'cognito_user_id': user_data['cognito_user_id'],
-                    'username': user_data['username']
-                }
-            )
+            customers = stripe.Customer.list(email=user_data['email'])
+            print(f"Found {len(customers.data)} customers with this email")
+            
+            if customers.data:
+                customer = customers.data[0]
+                print(f"Found existing customer: {customer.id}")
+            else:
+                print("No existing customer found, creating new one...")
+                # Create new customer
+                customer = stripe.Customer.create(
+                    email=user_data['email'],
+                    name=user_data['name'],
+                    phone=user_data['phone_number'],
+                    metadata={
+                        'cognito_user_id': user_data['cognito_user_id'],
+                        'username': user_data['username']
+                    }
+                )
+                print(f"Created new customer: {customer.id}")
+                print(f"Customer metadata: {customer.metadata}")
+
+        except Exception as e:
+            print(f"Error retrieving/creating customer: {str(e)}")
+            raise
 
         # Create subscription
+        print(f"Creating subscription for customer: {customer.id}")
         subscription = stripe.Subscription.create(
             customer=customer.id,
             items=[{'price': plan_id}],
             payment_behavior='default_incomplete',
             expand=['latest_invoice.payment_intent']
         )
+        print(f"Created subscription: {subscription.id}")
+        print(f"Subscription status: {subscription.status}")
 
         # Update session with subscription status
+        print("Updating session with subscription info")
         session['user']['subscription_status'] = 'pending'
         session['user']['subscription_id'] = subscription.id
+        print(f"Updated session: {dict(session)}")
 
+        print("=== SUBSCRIPTION CREATION SUCCESS ===")
         return jsonify({
             'subscription_id': subscription.id,
             'client_secret': subscription.latest_invoice.payment_intent.client_secret
         })
 
     except Exception as e:
+        print(f"=== SUBSCRIPTION CREATION ERROR ===")
         print(f"Error creating subscription: {str(e)}")
+        print(f"Full traceback: {traceback.format_exc()}")
+        print(f"Session state at error: {dict(session)}")
         return jsonify({'error': 'Failed to create subscription'}), 500
