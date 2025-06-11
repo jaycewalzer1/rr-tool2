@@ -3,6 +3,7 @@
 {% block dashboard_title %}Google Maps - CRE: AI Solutions{% endblock %}
 
 {% block extra_scripts %}
+    <!-- Define initMap inline BEFORE Maps API loads -->
     <script>
         window.initMap = function () {
             if (typeof initializeMap === 'function') {
@@ -11,34 +12,24 @@
         };
     </script>
 
+    <!-- Load your JS -->
     <script src="{{ url_for('static', filename='js/gmaps.js') }}"></script>
 
-    <script
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAf-BOMf4RE26r8XenLvtLBHkUnB9DHAQM&libraries=places&callback=initMap"
-      async
-      defer>
+    <!-- Load Google Maps JS API -->
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=maps&callback=initMap">
     </script>
 
-    <!-- Web Components loader -->
-    <script 
-        type="module"
-        src="https://unpkg.com/@googlemaps/extended-component-library@0.15.0/dist/loader.js">
-    </script>
+    <!-- Load Web Components for Place Autocomplete -->
+    <script type="module" src="{{ url_for('static', filename='js/gmaps-loader.js') }}"></script>
+
 {% endblock %}
 
 {% block dashboard_content %}
     <div class="map-container">
         <div class="search-container">
-            <!-- NEW: Modern Place Autocomplete -->
-            <gmpx-place-autocomplete
-                id="autocomplete"
-                style="width: 100%;"
-                placeholder="Enter an address">
-            </gmpx-place-autocomplete>
-
-            <form id="addressForm" style="margin-top: 10px;">
-                <button type="submit">Add Marker</button>
-            </form>
+            <input type="text" id="addressInput" placeholder="Enter an address" aria-label="Address input" />
+            <button id="addMarkerBtn">Add Marker</button>
         </div>
 
         <div id="map" style="height: 600px; width: 100%;"></div>
@@ -59,37 +50,39 @@
             padding: 10px;
             background-color: #f5f5f5;
             border-radius: 5px;
-        }
-
-        gmpx-place-autocomplete {
-            display: block;
-            height: 40px;
-            margin-bottom: 8px;
-            font-family: inherit;
-        }
-
-        #addressForm {
             display: flex;
-            justify-content: flex-start;
+            gap: 10px;
+            align-items: center;
         }
 
-        #addressForm button {
+        .search-container input[type="text"] {
+            flex-grow: 1;
+            padding: 8px 12px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-container input[type="text"]:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+        .search-container button {
             padding: 8px 16px;
-            background-color: #4CAF50;
+            font-size: 16px;
+            background-color: #007bff;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-weight: 500;
+            transition: background-color 0.3s ease;
         }
 
-        #addressForm button:hover {
-            background-color: #45a049;
-        }
-
-        #mapLoader {
-            font-size: 14px;
-            color: #888;
+        .search-container button:hover {
+            background-color: #0056b3;
         }
     </style>
 {% endblock %}
