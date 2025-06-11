@@ -322,6 +322,32 @@ def list_s3_files():
         print(f"Error listing files from S3: {str(e)}")
         return jsonify({'error': 'Could not list files'}), 500
 
+@dashboard_bp.route('/api/s3/files', methods=['DELETE'])
+@login_required
+def delete_s3_file():
+    data = request.get_json()
+    s3_key = data.get('s3_key')
+    user_id = session.get('user', {}).get('user_id')
+
+    if not s3_key or not user_id:
+        return jsonify({'error': 'Missing s3_key or user_id'}), 400
+
+    try:
+        # Verify that the file belongs to the current user
+        if not s3_key.startswith(f'uploads/{user_id}/'):
+            return jsonify({'error': 'Unauthorized file access'}), 403
+
+        s3_client.delete_object(
+            Bucket=os.getenv('S3_BUCKET_NAME_PDF'),
+            Key=s3_key
+        )
+
+        return jsonify({'message': 'File deleted successfully'})
+
+    except Exception as e:
+        print(f"Error deleting file: {str(e)}")
+        return jsonify({'error': 'Failed to delete file'}), 500
+
 @dashboard_bp.route('/files')
 @login_required
 @verify_account
