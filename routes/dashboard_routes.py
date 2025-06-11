@@ -62,7 +62,10 @@ def database():
 @login_required
 @verify_account
 def gmaps():
-    return render_template('dashboard/gmaps.html')
+    return render_template(
+        'dashboard/gmaps.html',
+        GOOGLE_MAPS_API_KEY=os.getenv("GOOGLE_MAPS_API_KEY")  # or use current_app.config["GOOGLE_MAPS_API_KEY"]
+    )
 
 @dashboard_bp.route('/subscription/status')
 def subscription_status():

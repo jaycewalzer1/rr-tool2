@@ -3,7 +3,7 @@
 {% block dashboard_title %}Google Maps - CRE: AI Solutions{% endblock %}
 
 {% block extra_scripts %}
-    <!-- Define initMap inline so it's globally available BEFORE Maps API loads -->
+    <!-- Define initMap inline BEFORE Maps API loads -->
     <script>
         window.initMap = function () {
             if (typeof initializeMap === 'function') {
@@ -12,20 +12,39 @@
         };
     </script>
 
-    <script src="{{ url_for('static', filename='js/gmaps.js') }}"></script>    <!-- Load the Maps API after defining `initMap` -->
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=places&callback=initMap"></script>
-{% endblock %}
+    <!-- Load your JS -->
+    <script src="{{ url_for('static', filename='js/gmaps.js') }}"></script>
 
+    <!-- Load Google Maps JS API -->
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=maps&callback=initMap">
+    </script>
+
+    <!-- Load Web Components for Place Autocomplete -->
+    <script type="module"
+        src="https://unpkg.com/@googlemaps/extended-component-library@latest/dist/loader.js">
+    </script>
+{% endblock %}
 
 {% block dashboard_content %}
     <div class="map-container">
         <div class="search-container">
-            <form id="addressForm">
-                <input type="text" id="addressInput" placeholder="Enter an address...">
+            <!-- NEW: Modern Place Autocomplete -->
+            <gmpx-place-autocomplete
+                id="autocomplete"
+                style="width: 100%;"
+                placeholder="Enter an address">
+            </gmpx-place-autocomplete>
+
+            <form id="addressForm" style="margin-top: 10px;">
                 <button type="submit">Add Marker</button>
             </form>
         </div>
+
         <div id="map" style="height: 600px; width: 100%;"></div>
+        <div id="mapLoader" style="display: none; text-align: center; padding: 10px;">
+            <em>Loading...</em>
+        </div>
     </div>
 {% endblock %}
 
@@ -34,22 +53,26 @@
         .map-container {
             margin-top: 20px;
         }
+
         .search-container {
             margin-bottom: 20px;
             padding: 10px;
             background-color: #f5f5f5;
             border-radius: 5px;
         }
+
+        gmpx-place-autocomplete {
+            display: block;
+            height: 40px;
+            margin-bottom: 8px;
+            font-family: inherit;
+        }
+
         #addressForm {
             display: flex;
-            gap: 10px;
+            justify-content: flex-start;
         }
-        #addressInput {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
+
         #addressForm button {
             padding: 8px 16px;
             background-color: #4CAF50;
@@ -57,9 +80,16 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            font-weight: 500;
         }
+
         #addressForm button:hover {
             background-color: #45a049;
+        }
+
+        #mapLoader {
+            font-size: 14px;
+            color: #888;
         }
     </style>
 {% endblock %}
