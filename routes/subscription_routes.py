@@ -308,12 +308,33 @@ def manage_membership():
 @subscription_bp.route('/subscription/create', methods=['POST'])
 def create_subscription():
     try:
-        customer = stripe.Customer.list(email=session['email']).data[0]
+        # Get plan ID from request
         plan_id = request.json.get('plan_id')
-
         if not plan_id:
             return jsonify({'error': 'Plan ID is required'}), 400
 
+        # Get user data from session
+        user_data = session.get('pending_user_data')
+        if not user_data:
+            return jsonify({'error': 'User data not found in session'}), 400
+
+        # Create or retrieve Stripe customer
+        try:
+            # Try to get existing customer
+            customer = stripe.Customer.list(email=user_data['email']).data[0]
+        except IndexError:
+            # Create new customer
+            customer = stripe.Customer.create(
+                email=user_data['email'],
+                name=user_data['name'],
+                phone=user_data['phone_number'],
+                metadata={
+                    'cognito_user_id': user_data['cognito_user_id'],
+                    'username': user_data['username']
+                }
+            )
+
+        # Create subscription
         subscription = stripe.Subscription.create(
             customer=customer.id,
             items=[{'price': plan_id}],
@@ -321,10 +342,15 @@ def create_subscription():
             expand=['latest_invoice.payment_intent']
         )
 
+        # Update session with subscription status
+        session['user']['subscription_status'] = 'pending'
+        session['user']['subscription_id'] = subscription.id
+
         return jsonify({
             'subscription_id': subscription.id,
             'client_secret': subscription.latest_invoice.payment_intent.client_secret
         })
+
     except Exception as e:
         print(f"Error creating subscription: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Failed to create subscription'}), 500
