@@ -23,12 +23,12 @@ function initializeSubscription() {
         return;
     }
 
-    console.log('Found Stripe public key:', stripePublicKey.content);
     if (!stripePublicKey.content) {
         console.error('Stripe public key is empty');
         return;
     }
 
+    console.log('Found Stripe public key:', stripePublicKey.content);
     const stripe = Stripe(stripePublicKey.content);
     console.log('Stripe initialized with key:', stripePublicKey.content);
 
@@ -56,23 +56,15 @@ function initializeSubscription() {
                 credentials: 'include'
             });
 
-            if (!checkoutResponse.ok) {
-                const errorData = await checkoutResponse.json();
-                throw new Error(errorData.error || `HTTP ${checkoutResponse.status}: ${checkoutResponse.statusText}`);
-            }
+            const data = await checkoutResponse.json();
 
-            const responseText = await checkoutResponse.text();
-            console.log("⚠️ Raw response text:", responseText);
-            
             if (!checkoutResponse.ok) {
-                throw new Error(`HTTP ${checkoutResponse.status}: ${checkoutResponse.statusText}`);
+                throw new Error(data.error || `HTTP ${checkoutResponse.status}: ${checkoutResponse.statusText}`);
             }
-            
-            const data = JSON.parse(responseText);
 
             if (!data.id) throw new Error('No checkout session ID returned');
 
-            console.log('Redirecting to checkout');
+            console.log('Redirecting to checkout with session ID:', data.id);
             stripe.redirectToCheckout({ sessionId: data.id });
         } catch (error) {
             console.error('Subscription error:', error);
