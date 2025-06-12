@@ -43,9 +43,20 @@ def privacy():
 def terms():
     return render_template('home/terms.html')
 
-@misc_bp.route('/create-checkout-session/<plan_id>', methods=['GET', 'POST'])
+@misc_bp.route('/create-checkout-session/<plan_id>', methods=['POST'])
 def create_checkout_session(plan_id):
     try:
+        # Get user from session (auth flow)
+        user = session.get('user') or session.get('pending_user_data')
+        print(f"[DEBUG] user: {user}")
+
+        # Handle unauthenticated requests
+        if not user:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'error': 'Please log in to subscribe.'}), 401
+            else:
+                return redirect(url_for('auth.login'))
+
         plans = {
             'basic': {
                 'price_id': os.getenv('STRIPE_PRICE_ID_BASIC'),
@@ -75,7 +86,7 @@ def create_checkout_session(plan_id):
         selected_plan = plans[plan_id]
         print(f"[DEBUG] selected plan: {selected_plan}")
 
-        user_id = user.get('sub') or user.get('cognito_user_id')
+        user_id = user.get('sub') or user.get('cognito_user_id') or user.get('username')
         print(f"[DEBUG] user_id: {user_id}")
 
         customer_list = stripe.Customer.list(email=user.get('email')).data
@@ -97,12 +108,14 @@ def create_checkout_session(plan_id):
             mode='subscription',
             customer=customer.id,
             success_url=f"{request.host_url}confirm-signup?subscription_completed=true&session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url = request.host_url.rstrip('/') + '/subscription',
+            cancel_url=request.host_url.rstrip('/') + '/subscription',
             metadata={'user_id': user_id}
         )
 
         session['stripe_session_id'] = checkout_session.id
+        print(f"[SUCCESS] Stripe checkout session created: {checkout_session.id}")
         return jsonify({'id': checkout_session.id})
+
     except Exception as e:
         print(f"[EXCEPTION] Error creating checkout session: {str(e)}")
         return jsonify({'error': str(e)}), 403
