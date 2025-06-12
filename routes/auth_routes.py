@@ -137,20 +137,18 @@ def resend_confirmation_code():
 
 @auth_bp.route('/confirm-signup', methods=['GET', 'POST'])
 def confirm_signup():
-    # Check if user has completed subscription
-    if request.args.get('subscription_completed'):
-        session['subscription_completed'] = True
-    elif 'subscription_completed' not in session or not session['subscription_completed']:
-        flash('Please complete your subscription first!', 'warning')
-        return redirect(url_for('dashboard.subscription'))
+    if not request.args.get('subscription_completed'):
+        return redirect(url_for('auth.subscription'))
 
-    if 'pending_user_data' not in session:
-        flash('Please sign up first!', 'danger')
+    if 'user' not in session or 'username' not in session['user']:
+        flash("Please sign up first", "warning")
         return redirect(url_for('auth.signup'))
 
     form = ConfirmForm()
     if form.validate_on_submit():
-        username = session['pending_user_data']['username']
+        username = session['user']['username']
+        password = session['user'].get('password')  # stored temporarily in session
+
         confirmation_code = form.confirmation_code.data
         
         try:
@@ -162,18 +160,18 @@ def confirm_signup():
                 SecretHash=secret_hash
             )
 
-            # Authenticate the user
+            # Authenticate
             auth_response = cognito.initiate_auth(
                 ClientId=COGNITO_APP_CLIENT_ID,
                 AuthFlow='USER_PASSWORD_AUTH',
                 AuthParameters={
                     'USERNAME': username,
-                    'PASSWORD': session['pending_user_data']['password'],
+                    'PASSWORD': password,
                     'SECRET_HASH': secret_hash
                 }
             )
 
-            # Set up session
+            # Save auth tokens
             session['auth'] = {
                 'access_token': auth_response['AuthenticationResult']['AccessToken'],
                 'refresh_token': auth_response['AuthenticationResult']['RefreshToken'],
@@ -186,15 +184,16 @@ def confirm_signup():
             
             session['user'] = {
                 'email': user_data.get('email', ''),
-                'username': user_data.get('username', ''),
+                'username': user_data.get('preferred_username', ''),
                 'user_id': user_data.get('sub', '')
             }
 
-            # Clean up temporary data
+            # Clean up
+            session['user'].pop('password', None)
             cleanup_session()
 
             flash('Account confirmed and logged in successfully!', 'success')
-            return redirect(url_for('auth.login'))
+            return redirect(url_for('dashboard.index'))
 
         except cognito.exceptions.ExpiredCodeException:
             flash('The confirmation code has expired.', 'warning')
@@ -204,8 +203,8 @@ def confirm_signup():
             print(f"Confirmation error: {str(e)}")
             flash('An error occurred. Please try again.', 'danger')
 
-    # If GET request or form validation failed, show the form
     return render_template('account/confirm_signup.html', form=form)
+
 
 
 @auth_bp.route('/reset', methods=['GET', 'POST'])
