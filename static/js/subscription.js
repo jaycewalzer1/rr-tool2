@@ -20,58 +20,55 @@ function initializeSubscription() {
     console.log('Stripe initialized with key:', stripePublicKey.content);
 
     async function subscribe(planId) {
-        console.log('Subscribe called for plan:', planId);
-        const button = document.querySelector(`.plan-card[data-plan-id="${planId}"] .subscribe-btn`);
-        if (!button) {
-            console.error('Subscribe button not found for plan:', planId);
+    console.log('Subscribe called for plan:', planId);
+    const button = document.querySelector(`.plan-card[data-plan-id="${planId}"] .subscribe-btn`);
+    if (!button) {
+        console.error('Subscribe button not found for plan:', planId);
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Processing...';
+
+    try {
+        const checkoutResponse = await fetch(`/create-checkout-session/${planId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'include'
+        });
+
+        const rawText = await checkoutResponse.text();
+        console.warn("⚠️ RAW RESPONSE:", rawText.slice(0, 300));
+
+        // ✅ Detect HTML login redirect
+        if (rawText.includes('<!DOCTYPE html') || rawText.toLowerCase().includes('<html')) {
+            console.warn('Received HTML, redirecting to login...');
+            window.location.href = '/login';
             return;
         }
 
-        button.disabled = true;
-        button.textContent = 'Processing...';
-
-        try {
-            const checkoutResponse = await fetch(`/create-checkout-session/${planId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest' // 👈 Required for Flask to return JSON on session errors
-                },
-                credentials: 'include'
-            });
-
-            const rawText = await checkoutResponse.text();
-            console.warn("⚠️ RAW RESPONSE:", rawText.slice(0, 300));
-
-            const contentType = checkoutResponse.headers.get('content-type') || '';
-
-            if (!checkoutResponse.ok) {
-                if (rawText.includes('<!DOCTYPE html')) {
-                    console.warn("Redirected to login page — not authenticated.");
-                    window.location.href = '/login';
-                    return;
-                }
-
-                throw new Error(`Subscription failed: ${checkoutResponse.status}`);
-            }
-
-            if (!contentType.includes('application/json')) {
-                throw new Error('Expected JSON but got non-JSON content');
-            }
-
-            const data = JSON.parse(rawText);
-            if (!data.id) throw new Error('No checkout session ID returned');
-
-            console.log('Redirecting to Stripe checkout...');
-            stripe.redirectToCheckout({ sessionId: data.id });
-
-        } catch (error) {
-            console.error('Subscription error:', error);
-            button.textContent = 'Subscribe';
-            button.disabled = false;
-            alert(error.message || 'An error occurred during subscription.');
+        const contentType = checkoutResponse.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+            throw new Error('Expected JSON but got non-JSON content');
         }
+
+        const data = JSON.parse(rawText);
+        if (!data.id) throw new Error('No checkout session ID returned');
+
+        console.log('Redirecting to Stripe checkout...');
+        stripe.redirectToCheckout({ sessionId: data.id });
+
+    } catch (error) {
+        console.error('Subscription error:', error);
+        button.textContent = 'Subscribe';
+        button.disabled = false;
+        alert(error.message || 'An error occurred during subscription.');
     }
+}
+
 
     const subscribeButtons = document.querySelectorAll('.subscribe-btn');
     subscribeButtons.forEach(button => {
