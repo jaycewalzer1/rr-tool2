@@ -61,7 +61,15 @@ function initializeSubscription() {
                 throw new Error(errorData.error || `HTTP ${checkoutResponse.status}: ${checkoutResponse.statusText}`);
             }
 
-            const data = await checkoutResponse.json();
+            const responseText = await checkoutResponse.text();
+            console.log("⚠️ Raw response text:", responseText);
+            
+            if (!checkoutResponse.ok) {
+                throw new Error(`HTTP ${checkoutResponse.status}: ${checkoutResponse.statusText}`);
+            }
+            
+            const data = JSON.parse(responseText);
+
             if (!data.id) throw new Error('No checkout session ID returned');
 
             console.log('Redirecting to checkout');
