@@ -67,7 +67,7 @@ def create_checkout_session():
             payment_method_types=["card"],
             mode="subscription",
             line_items=[{
-                "price": os.getenv("STRIPE_PRICE_ID"),
+                "price": os.getenv("STRIPE_PRICE_ID_BASIC"),
                 "quantity": 1,
             }],
             success_url="https://credatasolutionsx.com/success",
