@@ -121,7 +121,7 @@ def stripe_webhook():
 
 @misc_bp.route('/success')
 def success():
-    user = session.get('pending_user_data')
+    user = session.get('user')
     stripe_data = session.get('stripe_subscription')
 
     if not user or not stripe_data:
