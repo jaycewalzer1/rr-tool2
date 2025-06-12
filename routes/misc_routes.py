@@ -58,8 +58,12 @@ def terms():
 
 @misc_bp.route("/create-checkout-session", methods=["POST"])
 def create_checkout_session():
+    user = session.get('pending_user_data')
+    if not user:
+        return jsonify({'error': 'No pending signup data found'}), 400
+
     try:
-        session_obj = stripe.checkout.Session.create(
+        stripe_session = stripe.checkout.Session.create(
             payment_method_types=["card"],
             mode="subscription",
             line_items=[{
@@ -68,13 +72,21 @@ def create_checkout_session():
             }],
             success_url="https://credatasolutionsx.com/success",
             cancel_url="https://credatasolutionsx.com/cancel",
+            metadata={
+                "email": user["email"],
+                "username": user["username"],
+            }
         )
-        return jsonify({'id': session_obj.id})
-    
+
+        # Save the session info temporarily
+        session['stripe_subscription'] = {
+            'session_id': stripe_session.id
+        }
+
+        return jsonify({'id': stripe_session.id})
+
     except Exception as e:
-        print("🚨 [EXCEPTION] Stripe checkout creation failed")
-        print("❌ Error message:", str(e))
-        print("🧵 Full traceback:")
+        print("🚨 Stripe error:", str(e))
         print(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
 
