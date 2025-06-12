@@ -53,10 +53,13 @@ def create_checkout_session(plan_id):
         # Handle unauthenticated requests
         if not user:
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                print("[AUTH] No session user — returning 401")
                 return jsonify({'error': 'Please log in to subscribe.'}), 401
             else:
+                print("[AUTH] No session user — redirecting to login")
                 return redirect(url_for('auth.login'))
 
+        # Plans defined here
         plans = {
             'basic': {
                 'price_id': os.getenv('STRIPE_PRICE_ID_BASIC'),
@@ -84,8 +87,10 @@ def create_checkout_session(plan_id):
                 name=user.get('name'),
                 metadata={'user_id': user_id}
             )
+            print(f"[STRIPE] Created new customer: {customer.id}")
         else:
             customer = customer_list[0]
+            print(f"[STRIPE] Found existing customer: {customer.id}")
 
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
