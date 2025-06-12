@@ -11,7 +11,10 @@ auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/subscription')
 def subscription():
-    return render_template('account/subscription.html')
+    return render_template(
+        'account/subscription.html',
+        publishable_key=os.getenv('STRIPE_PUBLIC_KEY')
+    )
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
