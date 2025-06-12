@@ -7,6 +7,16 @@ import boto3
 
 misc_bp = Blueprint('misc', __name__)
 
+@misc_bp.route('/debug-session')
+def debug_session():
+    from flask import jsonify
+    return jsonify({
+        'session_keys': list(session.keys()),
+        'user': session.get('user'),
+        'session_cookie_secure': app.config['SESSION_COOKIE_SECURE'],
+        'session_cookie_name': app.config.get('SESSION_COOKIE_NAME', 'session')
+    })
+
 @misc_bp.route("/contact")
 def contact():
     return render_template("home/contact.html")
