@@ -117,26 +117,27 @@ def create_checkout_session(plan_id):
 def stripe_webhook():
     payload = request.get_data(as_text=True)
     sig_header = request.headers.get('Stripe-Signature')
-    
+
     try:
         event = stripe.Webhook.construct_event(
             payload, sig_header, os.getenv('STRIPE_WEBHOOK_SECRET')
         )
     except ValueError as e:
+        print("[WEBHOOK ERROR] Invalid payload")
         return jsonify({'error': 'Invalid payload'}), 400
     except stripe.error.SignatureVerificationError as e:
+        print("[WEBHOOK ERROR] Invalid signature")
         return jsonify({'error': 'Invalid signature'}), 400
 
-    # Handle the checkout.session.completed event
+    print(f"[WEBHOOK] Received event: {event['type']}")
+
     if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
-        
-        # Get the user's session from the metadata
-        user_id = session.metadata.get('user_id')
-        
-        # Update the user's session with subscription completed
-        if user_id:
-            session['subscription_completed'] = True
+        checkout_session = event['data']['object']
+        user_id = checkout_session.get('metadata', {}).get('user_id')
+        print(f"[WEBHOOK] Subscription completed for user_id: {user_id}")
+
+        # Optionally log this or update user status in DB
+        # DO NOT modify `session` here (not a user-facing request)
 
     return jsonify({'status': 'success'})
 
