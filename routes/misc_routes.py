@@ -43,23 +43,27 @@ def privacy():
 def terms():
     return render_template('home/terms.html')
 
+
 @misc_bp.route('/create-checkout-session/<plan_id>', methods=['POST'])
 def create_checkout_session(plan_id):
     try:
+        # DEBUG: Inspect session contents
+        print(f"== SESSION KEYS: {list(session.keys())} ==")
+        print(f"== USER IN SESSION: {session.get('user')}")
+        print(f"== PENDING USER IN SESSION: {session.get('pending_user_data')}")
+
         # Get user from session (auth flow)
         user = session.get('user') or session.get('pending_user_data')
-        print(f"[DEBUG] user: {user}")
 
-        # Handle unauthenticated requests
         if not user:
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                print("[AUTH] No session user — returning 401")
+                print("⚠️ Unauthenticated XHR - returning JSON 401")
                 return jsonify({'error': 'Please log in to subscribe.'}), 401
             else:
-                print("[AUTH] No session user — redirecting to login")
+                print("⚠️ Unauthenticated browser request - redirecting")
                 return redirect(url_for('auth.login'))
 
-        # Plans defined here
+        # Plan definitions
         plans = {
             'basic': {
                 'price_id': os.getenv('STRIPE_PRICE_ID_BASIC'),
@@ -113,6 +117,7 @@ def create_checkout_session(plan_id):
         print(f"[EXCEPTION] Error creating checkout session: {str(e)}")
         return jsonify({'error': str(e)}), 403
 
+
 @misc_bp.route('/stripe-webhook', methods=['POST'])
 def stripe_webhook():
     payload = request.get_data(as_text=True)
@@ -136,8 +141,7 @@ def stripe_webhook():
         user_id = checkout_session.get('metadata', {}).get('user_id')
         print(f"[WEBHOOK] Subscription completed for user_id: {user_id}")
 
-        # Optionally log this or update user status in DB
-        # DO NOT modify `session` here (not a user-facing request)
+        # Optionally update DB here. Don't touch Flask session.
 
     return jsonify({'status': 'success'})
 
