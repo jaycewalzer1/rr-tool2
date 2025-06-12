@@ -49,7 +49,7 @@ def check_session():
         return jsonify({'error': 'Not logged in'}), 401
     return jsonify({'status': 'ok', 'user': session['user']})
 
-@misc_bp.route('/create-checkout-session/<plan_id>', methods=['POST'])
+@misc_bp.route('/create-checkout-session/<plan_id>', methods=['GET', 'POST'])
 def create_checkout_session(plan_id):
     try:
         # Get user data from session
