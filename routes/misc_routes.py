@@ -130,12 +130,11 @@ def create_checkout_session(plan_id):
         return jsonify({'id': checkout_session.id})
 
     except Exception as e:
-        except Exception as e:
         print(f"[EXCEPTION] Stripe checkout creation failed: {str(e)}")
         print("[TRACEBACK]")
-        print(traceback.format_exc())  # <== This prints the full stack trace
+        print(traceback.format_exc())  # Print full stack trace
         return jsonify({'error': 'An unexpected error occurred'}), 500
-
+    
 
 
 
