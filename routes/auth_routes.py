@@ -113,28 +113,6 @@ def signup():
     return render_template('account/signup.html', form=form)
 
 
-
-@auth_bp.route('/resend-confirmation-code', methods=['POST'])
-def resend_confirmation_code():
-    data = request.get_json()
-    username = data.get('username') or session.get('user', {}).get('username')
-
-    if not username:
-        return jsonify({'error': 'Username not provided'}), 400
-
-    try:
-        secret_hash = get_secret_hash(username, COGNITO_APP_CLIENT_ID)
-        cognito.resend_confirmation_code(
-            ClientId=COGNITO_APP_CLIENT_ID,
-            Username=username,
-            SecretHash=secret_hash
-        )
-        return jsonify({'message': 'Code resent successfully'})
-    except Exception as e:
-        print(f"Resend error: {str(e)}")
-        return jsonify({'error': 'Failed to resend code'}), 500
-
-
 @auth_bp.route('/confirm-signup', methods=['GET', 'POST'])
 def confirm_signup():
     if not request.args.get('subscription_completed'):
