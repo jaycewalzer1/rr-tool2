@@ -171,7 +171,7 @@ def confirm_signup():
             cleanup_session()
 
             flash('Account confirmed and logged in successfully!', 'success')
-            return redirect(url_for('dashboard.index'))
+            return redirect(url_for('dashboard/files.html'))
 
         except cognito.exceptions.ExpiredCodeException:
             flash('The confirmation code has expired.', 'warning')
@@ -274,12 +274,6 @@ def logout():
 
 @auth_bp.route('/resend-confirmation-code', methods=['POST'])
 def resend_confirmation_code():
-    data = request.get_json()
-    username = data.get('username')
-
-    if not username:
-        return jsonify({'error': 'Username is required'}), 400
-
     try:
         secret_hash = get_secret_hash(username, COGNITO_APP_CLIENT_ID)
         cognito.resend_confirmation_code(
