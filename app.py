@@ -25,7 +25,7 @@ app.config['SESSION_PERMANENT'] = True                       # Persistent sessio
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7) # Cookie lives for 7 days
 app.config['SESSION_COOKIE_SECURE'] = True                   # Only sent over HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True                 # Not accessible via JavaScript
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'                # Good CSRF protection with compatibility
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 
 # --- Initialize session and database ---
 Session(app)
