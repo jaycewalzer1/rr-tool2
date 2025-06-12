@@ -63,18 +63,6 @@ def create_checkout_session(plan_id):
                 'amount': 1,
                 'currency': 'usd',
                 'interval': 'month'
-            },
-            'premium': {
-                'price_id': os.getenv('STRIPE_PRICE_ID_PREMIUM'),
-                'amount': 1,
-                'currency': 'usd',
-                'interval': 'month'
-            },
-            'enterprise': {
-                'price_id': os.getenv('STRIPE_PRICE_ID_ENTERPRISE'),
-                'amount': 1,
-                'currency': 'usd',
-                'interval': 'month'
             }
         }
 
