@@ -1,15 +1,14 @@
 console.log('Subscription script loaded');
 
 // Test function to verify script is loaded
-window.subscriptionTest = function() {
+window.subscriptionTest = function () {
     console.log('Subscription test function called');
     return 'Subscription script is loaded';
 };
 
-// Check if Stripe is loaded
 function initializeSubscription() {
     if (window.stripeInitialized) return;
-    
+
     // Wait for Stripe to load
     if (typeof Stripe !== 'function') {
         console.log('Stripe not loaded yet, retrying...');
@@ -17,7 +16,7 @@ function initializeSubscription() {
         return;
     }
 
-    // Get Stripe key from meta tag
+    // Get Stripe public key from meta tag
     const stripePublicKey = document.querySelector('meta[name="stripe-public-key"]');
     if (!stripePublicKey) {
         console.error('Stripe public key meta tag not found');
@@ -30,11 +29,9 @@ function initializeSubscription() {
         return;
     }
 
-    // Initialize Stripe
     const stripe = Stripe(stripePublicKey.content);
     console.log('Stripe initialized with key:', stripePublicKey.content);
 
-    // Set flag to prevent reinitialization
     window.stripeInitialized = true;
 
     async function subscribe(planId) {
@@ -49,25 +46,10 @@ function initializeSubscription() {
         button.textContent = 'Processing...';
 
         try {
-            // Get user data from session
-            const response = await fetch('/api/user/check-session', {
-                credentials: 'include'
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Please log in to subscribe');
-            }
-
-            const userData = await response.json();
-            if (!userData.user) {
-                throw new Error('User data not found in session');
-            }
-
-            // Create checkout session
+            // Create Stripe Checkout session
             const checkoutResponse = await fetch(`/create-checkout-session/${planId}`, {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
                 },
@@ -92,7 +74,7 @@ function initializeSubscription() {
         }
     }
 
-    // Add event listeners to all subscribe buttons
+    // Attach event listeners to all subscribe buttons
     const subscribeButtons = document.querySelectorAll('.subscribe-btn');
     if (subscribeButtons.length === 0) {
         console.error('No subscribe buttons found');
@@ -100,7 +82,7 @@ function initializeSubscription() {
     }
 
     subscribeButtons.forEach(button => {
-        const planId = button.closest('.plan-card').dataset.planId;
+        const planId = button.closest('.plan-card')?.dataset?.planId;
         if (!planId) {
             console.error('Plan ID not found on button:', button);
             return;
@@ -113,7 +95,7 @@ function initializeSubscription() {
         });
     });
 
-    // Handle cancellation message
+    // Show cancellation alert if redirected with ?cancelled
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('cancelled')) {
         console.log('Cancellation message shown');
@@ -121,7 +103,6 @@ function initializeSubscription() {
     }
 }
 
-// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Document loaded, initializing subscription');
     initializeSubscription();
