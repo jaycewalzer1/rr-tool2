@@ -60,21 +60,19 @@ def terms():
 @misc_bp.route('/create-checkout-session/<plan_id>', methods=['POST'])
 def create_checkout_session(plan_id):
     try:
-        # Debug: log session contents
+        print(f"\n=== 🔔 Starting Checkout Session Creation ===")
         print(f"== SESSION KEYS: {list(session.keys())} ==")
         print(f"== USER: {session.get('user')}")
         print(f"== PENDING USER: {session.get('pending_user_data')}")
 
-        # Get user data from either full auth or pending signup
         user = session.get('user') or session.get('pending_user_data')
-
         if not user:
-            print("[AUTH] No user found in session")
+            print("[AUTH] ❌ No user found in session")
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return jsonify({'error': 'User session missing'}), 401
-            return redirect(url_for('misc.home'))
+            return jsonify({'error': 'Session expired. Please log in again.'}), 401
 
-        # Plan lookup
+        # Validate and fetch selected plan
         plans = {
             'basic': {
                 'price_id': os.getenv('STRIPE_PRICE_ID_BASIC'),
@@ -84,34 +82,44 @@ def create_checkout_session(plan_id):
             }
         }
 
-        print(f"[DEBUG] Requested plan_id: {plan_id}")
-        if plan_id not in plans:
-            print("[ERROR] Invalid plan ID requested")
+        print(f"[DEBUG] 🔍 Requested plan_id: {plan_id}")
+        selected_plan = plans.get(plan_id)
+        if not selected_plan:
+            print("[ERROR] ❌ Invalid plan ID requested")
             return jsonify({'error': 'Invalid plan'}), 400
 
-        selected_plan = plans[plan_id]
-        print(f"[DEBUG] Selected plan: {selected_plan}")
+        if not selected_plan.get('price_id'):
+            print("[ERROR] ❌ Missing Stripe price ID for plan")
+            return jsonify({'error': 'Pricing configuration error'}), 500
 
-        user_id = user.get('sub') or user.get('cognito_user_id') or user.get('username')
+        user_id = user.get('sub') or user.get('cognito_user_id') or user.get('user_id') or user.get('username')
         user_email = user.get('email')
-        user_name = user.get('name')
+        user_name = user.get('name', 'Unknown User')
 
-        print(f"[DEBUG] user_id: {user_id}, email: {user_email}")
+        print(f"[DEBUG] 👤 user_id: {user_id}, email: {user_email}, name: {user_name}")
+        print(f"[DEBUG] 💵 Using price_id: {selected_plan['price_id']}")
+        print(f"[DEBUG] 🔑 Stripe Secret Key (partial): {stripe.api_key[:10]}")
 
-        # Get or create Stripe customer
+        # Create or fetch Stripe customer
         customer_list = stripe.Customer.list(email=user_email).data
         if not customer_list:
             customer = stripe.Customer.create(
                 email=user_email,
-                name=user_name or 'Unknown User',
+                name=user_name,
                 metadata={'user_id': user_id}
             )
-            print(f"[STRIPE] Created new customer: {customer.id}")
+            print(f"[STRIPE] ✅ Created new customer: {customer.id}")
         else:
             customer = customer_list[0]
-            print(f"[STRIPE] Found existing customer: {customer.id}")
+            print(f"[STRIPE] ✅ Found existing customer: {customer.id}")
 
-        # Create Stripe checkout session
+        # Construct Stripe checkout session
+        success_url = f"{request.host_url}confirm-signup?subscription_completed=true&session_id={{CHECKOUT_SESSION_ID}}"
+        cancel_url = request.host_url.rstrip('/') + '/subscription'
+
+        print(f"[DEBUG] ✅ Success URL: {success_url}")
+        print(f"[DEBUG] ❌ Cancel URL: {cancel_url}")
+
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[{
@@ -120,20 +128,23 @@ def create_checkout_session(plan_id):
             }],
             mode='subscription',
             customer=customer.id,
-            success_url=f"{request.host_url}confirm-signup?subscription_completed=true&session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=request.host_url.rstrip('/') + '/subscription',
+            success_url=success_url,
+            cancel_url=cancel_url,
             metadata={'user_id': user_id}
         )
 
         session['stripe_session_id'] = checkout_session.id
-        print(f"[SUCCESS] Created Stripe Checkout Session ID: {checkout_session.id}")
+        print(f"[SUCCESS] ✅ Created Stripe Checkout Session ID: {checkout_session.id}")
+
         return jsonify({'id': checkout_session.id})
 
     except Exception as e:
-        print(f"[EXCEPTION] Stripe checkout creation failed: {str(e)}")
-        print("[TRACEBACK]")
-        print(traceback.format_exc())  # Print full stack trace
-        return jsonify({'error': 'An unexpected error occurred'}), 500
+        print("🚨 [EXCEPTION] Stripe checkout creation failed")
+        print("❌ Error message:", str(e))
+        print("🧵 Full traceback:")
+        print(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500  # NOTE: only use str(e) in dev
+
     
 
 
