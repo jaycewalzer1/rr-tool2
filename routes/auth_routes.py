@@ -95,6 +95,15 @@ def signup():
             'phone_number': phone_number,
             'password': password
         }
+        
+        session['user'] = {
+            'email': email,
+            'username': username,
+            'password': password,
+            'phone_number': phone_number,
+            'name': name
+        }
+
         session.permanent = True
         session.modified = True
 
