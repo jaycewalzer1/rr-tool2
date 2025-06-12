@@ -121,8 +121,54 @@ def stripe_webhook():
 
 @misc_bp.route('/success')
 def success():
-    # Redirect to confirm signup instead of showing success page
-    return redirect(url_for('auth.confirm_signup', subscription_completed=True))
+    user = session.get('pending_user_data')
+    stripe_data = session.get('stripe_subscription')
+
+    if not user or not stripe_data:
+        flash("Missing signup or payment data", "danger")
+        return redirect(url_for('auth.signup'))
+
+    # Create Cognito account now
+    try:
+        secret_hash = get_secret_hash(user['username'], COGNITO_APP_CLIENT_ID)
+        print(f"Creating Cognito user for {user['email']}")
+
+        response = cognito.sign_up(
+            ClientId=COGNITO_APP_CLIENT_ID,
+            Username=user['username'],
+            Password=user['password'],
+            SecretHash=secret_hash,
+            UserAttributes=[
+                {'Name': 'email', 'Value': user['email']},
+                {'Name': 'phone_number', 'Value': user['phone_number']},
+                {'Name': 'name', 'Value': user['name']},
+                {'Name': 'preferred_username', 'Value': user['username']}
+            ]
+        )
+
+        print(f"✅ Cognito user created: {response['UserSub']}")
+        session['user'] = {
+            'email': user['email'],
+            'username': user['username']
+        }
+
+        # Cleanup
+        session.pop('pending_user_data', None)
+        session.pop('stripe_subscription', None)
+
+        return redirect(url_for('auth.confirm_signup', subscription_completed=True))
+
+    except cognito.exceptions.UsernameExistsException:
+        flash("This username already exists.", "danger")
+    except cognito.exceptions.InvalidPasswordException:
+        flash("Invalid password format.", "danger")
+    except Exception as e:
+        print("Cognito creation failed:", str(e))
+        print(traceback.format_exc())
+        flash("Error creating your account. Please try again.", "danger")
+
+    return redirect(url_for('auth.signup'))
+
 
 @misc_bp.route('/cancel')
 def cancel():
