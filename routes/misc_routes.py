@@ -44,17 +44,8 @@ def terms():
     return render_template('home/terms.html')
 
 @misc_bp.route('/create-checkout-session/<plan_id>', methods=['GET', 'POST'])
-@misc_bp.route('/create-checkout-session/<plan_id>', methods=['POST'])
 def create_checkout_session(plan_id):
     try:
-        user = session.get('user') or session.get('pending_user_data')
-        if not user:
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return jsonify({'error': 'Please log in to subscribe.'}), 401
-            else:
-                return redirect(url_for('auth.login'))
-
-
         plans = {
             'basic': {
                 'price_id': os.getenv('STRIPE_PRICE_ID_BASIC'),
