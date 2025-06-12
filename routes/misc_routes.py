@@ -59,24 +59,21 @@ def terms():
 @misc_bp.route('/create-checkout-session/<plan_id>', methods=['POST'])
 def create_checkout_session(plan_id):
     try:
-        # DEBUG: Inspect session contents
+        # Debug: log session contents
         print(f"== SESSION KEYS: {list(session.keys())} ==")
-        print(f"== USER IN SESSION: {session.get('user')}")
-        print(f"== PENDING USER IN SESSION: {session.get('pending_user_data')}")
+        print(f"== USER: {session.get('user')}")
+        print(f"== PENDING USER: {session.get('pending_user_data')}")
 
-        # Get user from session (auth flow)
+        # Get user data from either full auth or pending signup
         user = session.get('user') or session.get('pending_user_data')
 
         if not user:
-            print("[AUTH] No user in session")
+            print("[AUTH] No user found in session")
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                # Return valid JSON (prevents JS crash)
                 return jsonify({'error': 'User session missing'}), 401
-            else:
-                # Fallback for non-AJAX, redirect home
-                return redirect(url_for('misc.home'))
+            return redirect(url_for('misc.home'))
 
-        # Plan definitions
+        # Plan lookup
         plans = {
             'basic': {
                 'price_id': os.getenv('STRIPE_PRICE_ID_BASIC'),
@@ -86,22 +83,26 @@ def create_checkout_session(plan_id):
             }
         }
 
-        print(f"[DEBUG] plan_id: {plan_id}")
+        print(f"[DEBUG] Requested plan_id: {plan_id}")
         if plan_id not in plans:
-            print("[ERROR] Invalid plan ID")
+            print("[ERROR] Invalid plan ID requested")
             return jsonify({'error': 'Invalid plan'}), 400
 
         selected_plan = plans[plan_id]
-        print(f"[DEBUG] selected plan: {selected_plan}")
+        print(f"[DEBUG] Selected plan: {selected_plan}")
 
         user_id = user.get('sub') or user.get('cognito_user_id') or user.get('username')
-        print(f"[DEBUG] user_id: {user_id}")
+        user_email = user.get('email')
+        user_name = user.get('name')
 
-        customer_list = stripe.Customer.list(email=user.get('email')).data
+        print(f"[DEBUG] user_id: {user_id}, email: {user_email}")
+
+        # Get or create Stripe customer
+        customer_list = stripe.Customer.list(email=user_email).data
         if not customer_list:
             customer = stripe.Customer.create(
-                email=user.get('email'),
-                name=user.get('name'),
+                email=user_email,
+                name=user_name or 'Unknown User',
                 metadata={'user_id': user_id}
             )
             print(f"[STRIPE] Created new customer: {customer.id}")
@@ -109,6 +110,7 @@ def create_checkout_session(plan_id):
             customer = customer_list[0]
             print(f"[STRIPE] Found existing customer: {customer.id}")
 
+        # Create Stripe checkout session
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[{
@@ -123,12 +125,13 @@ def create_checkout_session(plan_id):
         )
 
         session['stripe_session_id'] = checkout_session.id
-        print(f"[SUCCESS] Stripe checkout session created: {checkout_session.id}")
+        print(f"[SUCCESS] Created Stripe Checkout Session ID: {checkout_session.id}")
         return jsonify({'id': checkout_session.id})
 
     except Exception as e:
-        print(f"[EXCEPTION] Error creating checkout session: {str(e)}")
+        print(f"[EXCEPTION] Stripe checkout creation failed: {str(e)}")
         return jsonify({'error': str(e)}), 403
+
 
 
 @misc_bp.route('/stripe-webhook', methods=['POST'])
