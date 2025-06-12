@@ -85,57 +85,24 @@ def signup():
         password = form.password.data
 
         print(f"Signup attempt: Username={username}, Email={email}, Phone={phone_number}")
-        print(f"Session before Cognito signup: {dict(session)}")
+        print(f"Session before storing pending signup: {dict(session)}")
 
-        try:
-            # Create Cognito user immediately
-            secret_hash = get_secret_hash(username, COGNITO_APP_CLIENT_ID)
-            print(f"Generated secret hash for user {username}")
-            
-            response = cognito.sign_up(
-                ClientId=COGNITO_APP_CLIENT_ID,
-                Username=username,
-                Password=password,
-                SecretHash=secret_hash,
-                UserAttributes=[
-                    {'Name': 'email', 'Value': email},
-                    {'Name': 'phone_number', 'Value': phone_number},
-                    {'Name': 'name', 'Value': name},
-                    {'Name': 'preferred_username', 'Value': username}
-                ]
-            )
-            
-            print(f"Cognito signup response: {response}")
-            print(f"Cognito user ID: {response['UserSub']}")
-            
-           # Temporarily store signup form data
-            session['pending_user_data'] = {
-                'name': name,
-                'username': username,
-                'email': email,
-                'phone_number': phone_number,
-                'password': password,
-                'cognito_user_id': response['UserSub']
-            }
-            session.permanent = True
-            session.modified = True
-            
-            # Redirect to payment setup
-            return redirect(url_for('auth.subscription'))
+        # Just store data in session — no Cognito call yet
+        session['pending_user_data'] = {
+            'name': name,
+            'username': username,
+            'email': email,
+            'phone_number': phone_number,
+            'password': password
+        }
+        session.permanent = True
+        session.modified = True
 
-
-        except cognito.exceptions.UsernameExistsException:
-            print(f"Username {username} already exists")
-            flash('Username already exists. Please choose a different one.', 'danger')
-        except cognito.exceptions.InvalidParameterException as e:
-            print(f"Invalid parameter error: {str(e)}")
-            flash('Invalid signup parameters. Please check your input and try again.', 'danger')
-        except Exception as e:
-            print(f"Signup error: {str(e)}")
-            print(f"Full traceback: {traceback.format_exc()}")
-            flash('Error creating account. Please try again.', 'danger')
+        print("Stored pending_user_data in session")
+        return redirect(url_for('auth.subscription'))
 
     return render_template('account/signup.html', form=form)
+
 
 
 @auth_bp.route('/resend-confirmation-code', methods=['POST'])
