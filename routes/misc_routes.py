@@ -46,12 +46,11 @@ def terms():
 @misc_bp.route('/create-checkout-session/<plan_id>', methods=['GET', 'POST'])
 def create_checkout_session(plan_id):
     try:
-        # Support both confirmed and pending users
         user = session.get('user') or session.get('pending_user_data')
         if not user:
+            print("[ERROR] No user found in session")
             return jsonify({'error': 'User not found'}), 403
 
-        # Define plan details
         plans = {
             'basic': {
                 'price_id': os.getenv('STRIPE_PRICE_ID_BASIC'),
@@ -73,13 +72,17 @@ def create_checkout_session(plan_id):
             }
         }
 
+        print(f"[DEBUG] plan_id: {plan_id}")
         if plan_id not in plans:
+            print("[ERROR] Invalid plan ID")
             return jsonify({'error': 'Invalid plan'}), 400
 
-        # Determine user ID key depending on session type
-        user_id = user.get('sub') or user.get('cognito_user_id')
+        selected_plan = plans[plan_id]
+        print(f"[DEBUG] selected plan: {selected_plan}")
 
-        # Create Stripe customer if not exists
+        user_id = user.get('sub') or user.get('cognito_user_id')
+        print(f"[DEBUG] user_id: {user_id}")
+
         customer_list = stripe.Customer.list(email=user.get('email')).data
         if not customer_list:
             customer = stripe.Customer.create(
@@ -90,26 +93,23 @@ def create_checkout_session(plan_id):
         else:
             customer = customer_list[0]
 
-        # Create checkout session
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[{
-                'price': plans[plan_id]['price_id'],
+                'price': selected_plan['price_id'],
                 'quantity': 1,
             }],
             mode='subscription',
             customer=customer.id,
             success_url=f"{request.host_url}confirm-signup?subscription_completed=true&session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=url_for('dashboard.subscription', _external=True),
+            cancel_url=request.host_url.rstrip('/') + '/subscription',
             metadata={'user_id': user_id}
         )
 
-        # Store the session ID in the user's session
         session['stripe_session_id'] = checkout_session.id
-
         return jsonify({'id': checkout_session.id})
     except Exception as e:
-        print(f"Error creating checkout session: {str(e)}")
+        print(f"[EXCEPTION] Error creating checkout session: {str(e)}")
         return jsonify({'error': str(e)}), 403
 
 @misc_bp.route('/stripe-webhook', methods=['POST'])
