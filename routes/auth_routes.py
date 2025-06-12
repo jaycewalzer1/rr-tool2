@@ -9,6 +9,10 @@ import traceback
 
 auth_bp = Blueprint('auth', __name__)
 
+@auth_bp.route('/subscription')
+def subscription():
+    return render_template('account/subscription.html')
+
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
