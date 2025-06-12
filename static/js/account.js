@@ -89,3 +89,13 @@ function showFlashMessage(category, message) {
     }, 4000);
 }
 
+async function handleApiError(response) {
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        const message = data.error || response.statusText || 'Unknown error';
+        throw new Error(message);
+    }
+    return response.json().catch(() => ({}));
+}
+
+
