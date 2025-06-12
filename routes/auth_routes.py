@@ -116,10 +116,11 @@ def signup():
 
 @auth_bp.route('/resend-confirmation-code', methods=['POST'])
 def resend_confirmation_code():
-    username = session.get('pending_confirmation_username')
+    data = request.get_json()
+    username = data.get('username') or session.get('user', {}).get('username')
+
     if not username:
-        flash('Please sign up first!', 'danger')
-        return redirect(url_for('auth.signup'))
+        return jsonify({'error': 'Username not provided'}), 400
 
     try:
         secret_hash = get_secret_hash(username, COGNITO_APP_CLIENT_ID)
@@ -128,11 +129,10 @@ def resend_confirmation_code():
             Username=username,
             SecretHash=secret_hash
         )
-        flash('Confirmation code has been resent to your email.', 'success')
+        return jsonify({'message': 'Code resent successfully'})
     except Exception as e:
-        flash(f'Error resending confirmation code: {str(e)}', 'danger')
-
-    return redirect(url_for('auth.confirm_signup'))
+        print(f"Resend error: {str(e)}")
+        return jsonify({'error': 'Failed to resend code'}), 500
 
 
 @auth_bp.route('/confirm-signup', methods=['GET', 'POST'])
