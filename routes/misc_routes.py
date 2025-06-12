@@ -10,12 +10,14 @@ misc_bp = Blueprint('misc', __name__)
 @misc_bp.route('/debug-session')
 def debug_session():
     from flask import jsonify
-    return jsonify({
-        'session_keys': list(session.keys()),
-        'user': session.get('user'),
-        'session_cookie_secure': app.config['SESSION_COOKIE_SECURE'],
-        'session_cookie_name': app.config.get('SESSION_COOKIE_NAME', 'session')
-    })
+    try:
+        return jsonify({
+            'session_keys': list(session.keys()),
+            'pending_user_data': session.get('pending_user_data'),
+            'user': session.get('user')
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @misc_bp.route("/contact")
 def contact():
