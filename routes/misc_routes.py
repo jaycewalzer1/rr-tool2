@@ -121,14 +121,13 @@ def stripe_webhook():
 
 @misc_bp.route('/success')
 def success():
-    user = session.get('user')
+    user = session.get('pending_user_data')
     stripe_data = session.get('stripe_subscription')
 
     if not user or not stripe_data:
         flash("Missing signup or payment data", "danger")
         return redirect(url_for('auth.signup'))
 
-    # Create Cognito account now
     try:
         secret_hash = get_secret_hash(user['username'], COGNITO_APP_CLIENT_ID)
         print(f"Creating Cognito user for {user['email']}")
@@ -147,6 +146,8 @@ def success():
         )
 
         print(f"✅ Cognito user created: {response['UserSub']}")
+
+        # Promote user to session['user']
         session['user'] = {
             'email': user['email'],
             'username': user['username']
@@ -156,7 +157,22 @@ def success():
         session.pop('pending_user_data', None)
         session.pop('stripe_subscription', None)
 
+        session.permanent = True
+        session.modified = True
+
         return redirect(url_for('auth.confirm_signup', subscription_completed=True))
+
+    except cognito.exceptions.UsernameExistsException:
+        flash("This username already exists.", "danger")
+    except cognito.exceptions.InvalidPasswordException:
+        flash("Invalid password format.", "danger")
+    except Exception as e:
+        print("Cognito creation failed:", str(e))
+        print(traceback.format_exc())
+        flash("Error creating your account. Please try again.", "danger")
+
+    return redirect(url_for('auth.signup'))
+
 
     except cognito.exceptions.UsernameExistsException:
         flash("This username already exists.", "danger")
