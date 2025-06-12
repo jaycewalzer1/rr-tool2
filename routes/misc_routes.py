@@ -102,7 +102,7 @@ def create_checkout_session(plan_id):
             mode='subscription',
             customer=customer.id,
             success_url=f"{request.host_url}confirm-signup?subscription_completed=true&session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=request.host_url.rstrip('/') + '/subscription',
+            cancel_url = request.host_url.rstrip('/') + '/subscription',
             metadata={'user_id': user_id}
         )
 
