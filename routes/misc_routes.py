@@ -56,12 +56,13 @@ def create_checkout_session(plan_id):
         user = session.get('user') or session.get('pending_user_data')
 
         if not user:
+            print("[AUTH] No user in session")
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                print("⚠️ Unauthenticated XHR - returning JSON 401")
-                return jsonify({'error': 'Please log in to subscribe.'}), 401
+                # Return valid JSON (prevents JS crash)
+                return jsonify({'error': 'User session missing'}), 401
             else:
-                print("⚠️ Unauthenticated browser request - redirecting")
-                return redirect(url_for('auth.login'))
+                # Fallback for non-AJAX, redirect home
+                return redirect(url_for('misc.home'))
 
         # Plan definitions
         plans = {
