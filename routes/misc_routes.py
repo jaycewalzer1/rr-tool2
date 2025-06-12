@@ -124,10 +124,16 @@ def success():
     user = session.get('pending_user_data')
     stripe_data = session.get('stripe_subscription')
 
+    # If already signed up, just go forward
+    if not user and session.get('user'):
+        print("🔁 User already signed up, skipping Cognito")
+        return redirect(url_for('auth.confirm_signup', subscription_completed=True))
+
     if not user or not stripe_data:
         flash("Missing signup or payment data", "danger")
         return redirect(url_for('auth.signup'))
 
+    # Create Cognito account
     try:
         secret_hash = get_secret_hash(user['username'], COGNITO_APP_CLIENT_ID)
         print(f"Creating Cognito user for {user['email']}")
@@ -153,7 +159,6 @@ def success():
             'username': user['username']
         }
 
-        # Cleanup
         session.pop('pending_user_data', None)
         session.pop('stripe_subscription', None)
 
