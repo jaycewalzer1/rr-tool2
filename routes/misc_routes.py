@@ -4,6 +4,7 @@ import stripe
 from decorators import login_required, verify_account
 from auth import get_secret_hash, cognito, COGNITO_APP_CLIENT_ID
 import boto3
+import traceback
 
 misc_bp = Blueprint('misc', __name__)
 
@@ -129,8 +130,12 @@ def create_checkout_session(plan_id):
         return jsonify({'id': checkout_session.id})
 
     except Exception as e:
+        except Exception as e:
         print(f"[EXCEPTION] Stripe checkout creation failed: {str(e)}")
-        return jsonify({'error': str(e)}), 403
+        print("[TRACEBACK]")
+        print(traceback.format_exc())  # <== This prints the full stack trace
+        return jsonify({'error': 'An unexpected error occurred'}), 500
+
 
 
 
