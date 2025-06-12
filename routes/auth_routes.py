@@ -117,6 +117,8 @@ def signup():
                 'password': password,
                 'cognito_user_id': response['UserSub']
             }
+            session.permanent = True
+            session.modified = True
             
             # Redirect to payment setup
             return redirect(url_for('auth.subscription'))
