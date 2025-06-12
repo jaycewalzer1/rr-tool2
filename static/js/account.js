@@ -74,3 +74,18 @@ function validateConfirmationCode(code) {
     }
     return true;
 }
+
+
+function showFlashMessage(category, message) {
+    const flash = document.createElement('div');
+    flash.className = `flash-message ${category}`;
+    flash.textContent = message;
+
+    const container = document.querySelector('.flash-messages') || document.body;
+    container.prepend(flash);
+
+    setTimeout(() => {
+        flash.remove();
+    }, 4000);
+}
+
