@@ -108,7 +108,7 @@ def signup():
             }
             
             # Redirect to payment setup
-            return redirect(url_for('misc.create_checkout_session', plan_id='basic'))
+            return redirect(url_for('auth.subscription'))
 
 
         except cognito.exceptions.UsernameExistsException:
