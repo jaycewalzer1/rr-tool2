@@ -31,7 +31,7 @@ function initializeSubscription() {
     button.textContent = 'Processing...';
 
     try {
-        const checkoutResponse = await fetch(`/create-checkout-session/${planId}`, {
+        const checkoutResponse = await fetch(`/create-checkout-session`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
