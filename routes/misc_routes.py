@@ -43,17 +43,11 @@ def privacy():
 def terms():
     return render_template('home/terms.html')
 
-@misc_bp.route('/api/user/check-session')
-def check_session():
-    if 'user' not in session:
-        return jsonify({'error': 'Not logged in'}), 401
-    return jsonify({'status': 'ok', 'user': session['user']})
-
 @misc_bp.route('/create-checkout-session/<plan_id>', methods=['GET', 'POST'])
 def create_checkout_session(plan_id):
     try:
-        # Get user data from session
-        user = session.get('user')
+        # Support both confirmed and pending users
+        user = session.get('user') or session.get('pending_user_data')
         if not user:
             return jsonify({'error': 'User not found'}), 403
 
@@ -82,16 +76,19 @@ def create_checkout_session(plan_id):
         if plan_id not in plans:
             return jsonify({'error': 'Invalid plan'}), 400
 
+        # Determine user ID key depending on session type
+        user_id = user.get('sub') or user.get('cognito_user_id')
+
         # Create Stripe customer if not exists
-        customer = stripe.Customer.list(email=user.get('email')).data
-        if not customer:
+        customer_list = stripe.Customer.list(email=user.get('email')).data
+        if not customer_list:
             customer = stripe.Customer.create(
                 email=user.get('email'),
                 name=user.get('name'),
-                metadata={'user_id': user.get('sub')}  # Using Cognito sub as user_id
+                metadata={'user_id': user_id}
             )
         else:
-            customer = customer[0]
+            customer = customer_list[0]
 
         # Create checkout session
         checkout_session = stripe.checkout.Session.create(
@@ -104,12 +101,12 @@ def create_checkout_session(plan_id):
             customer=customer.id,
             success_url=f"{request.host_url}confirm-signup?subscription_completed=true&session_id={{CHECKOUT_SESSION_ID}}",
             cancel_url=url_for('dashboard.subscription', _external=True),
-            metadata={'user_id': user.get('sub')}  # Using Cognito sub as user_id
+            metadata={'user_id': user_id}
         )
-        
+
         # Store the session ID in the user's session
         session['stripe_session_id'] = checkout_session.id
-        
+
         return jsonify({'id': checkout_session.id})
     except Exception as e:
         print(f"Error creating checkout session: {str(e)}")
