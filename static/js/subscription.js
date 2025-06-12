@@ -18,13 +18,8 @@ function initializeSubscription() {
 
     // Get Stripe public key from meta tag
     const stripePublicKey = document.querySelector('meta[name="stripe-public-key"]');
-    if (!stripePublicKey) {
-        console.error('Stripe public key meta tag not found');
-        return;
-    }
-
-    if (!stripePublicKey.content) {
-        console.error('Stripe public key is empty');
+    if (!stripePublicKey || !stripePublicKey.content) {
+        console.error('Stripe public key not found or empty');
         return;
     }
 
@@ -46,7 +41,6 @@ function initializeSubscription() {
         button.textContent = 'Processing...';
 
         try {
-            // Create Stripe Checkout session
             const checkoutResponse = await fetch(`/create-checkout-session/${planId}`, {
                 method: 'POST',
                 headers: {
@@ -56,13 +50,32 @@ function initializeSubscription() {
                 credentials: 'include'
             });
 
-            const data = await checkoutResponse.json();
+            const contentType = checkoutResponse.headers.get('content-type') || '';
 
             if (!checkoutResponse.ok) {
-                throw new Error(data.error || `HTTP ${checkoutResponse.status}: ${checkoutResponse.statusText}`);
+                let message = `HTTP ${checkoutResponse.status}: ${checkoutResponse.statusText}`;
+
+                if (contentType.includes('application/json')) {
+                    const errorData = await checkoutResponse.json();
+                    message = errorData.error || message;
+                } else {
+                    const rawText = await checkoutResponse.text();
+                    console.warn('⚠️ Received non-JSON error response:', rawText.slice(0, 200));
+                }
+
+                throw new Error(message);
             }
 
-            if (!data.id) throw new Error('No checkout session ID returned');
+            if (!contentType.includes('application/json')) {
+                const rawText = await checkoutResponse.text();
+                throw new Error('Unexpected response format: expected JSON, received HTML');
+            }
+
+            const data = await checkoutResponse.json();
+
+            if (!data.id) {
+                throw new Error('No checkout session ID returned from server');
+            }
 
             console.log('Redirecting to checkout with session ID:', data.id);
             stripe.redirectToCheckout({ sessionId: data.id });
@@ -84,7 +97,7 @@ function initializeSubscription() {
     subscribeButtons.forEach(button => {
         const planId = button.closest('.plan-card')?.dataset?.planId;
         if (!planId) {
-            console.error('Plan ID not found on button:', button);
+            console.error('Plan ID not found for button:', button);
             return;
         }
 
