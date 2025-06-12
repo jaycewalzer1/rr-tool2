@@ -5,16 +5,20 @@ from auth import cognito, COGNITO_USER_POOL_ID, COGNITO_APP_CLIENT_ID
 from utils import cleanup_session
 import stripe
 import traceback
+import os
 
 
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/subscription')
 def subscription():
-    return render_template(
-        'account/subscription.html',
-        publishable_key=os.getenv('STRIPE_PUBLIC_KEY')
-    )
+    stripe_key = os.getenv('STRIPE_PUBLIC_KEY')
+    
+    if not stripe_key:
+        print("❌ STRIPE_PUBLIC_KEY is missing")
+        raise RuntimeError("STRIPE_PUBLIC_KEY is not set in environment")
+
+    return render_template('account/subscription.html', publishable_key=stripe_key)
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
