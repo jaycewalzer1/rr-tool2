@@ -96,8 +96,8 @@ def signup():
             
             print(f"Cognito signup response: {response}")
             print(f"Cognito user ID: {response['UserSub']}")
-
-            # Store user data in session
+            
+           # Temporarily store signup form data
             session['pending_user_data'] = {
                 'name': name,
                 'username': username,
@@ -106,19 +106,10 @@ def signup():
                 'password': password,
                 'cognito_user_id': response['UserSub']
             }
-            print(f"Stored pending user data in session: {session['pending_user_data']}")
             
-            # Also set a temporary user object for session check
-            session['user'] = {
-                'email': email,
-                'username': username,
-                'status': 'pending_subscription'
-            }
-            print(f"Set temporary user object: {session['user']}")
+            # Redirect to payment setup
+            return redirect(url_for('misc.create_checkout_session', plan_id='basic'))
 
-            # Redirect to subscription page
-            print("Redirecting to subscription page")
-            return redirect(url_for('dashboard.subscription'))
 
         except cognito.exceptions.UsernameExistsException:
             print(f"Username {username} already exists")
