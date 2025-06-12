@@ -147,7 +147,7 @@ def success():
 
         print(f"✅ Cognito user created: {response['UserSub']}")
 
-        # Promote user to session['user']
+        # Promote user to logged-in session
         session['user'] = {
             'email': user['email'],
             'username': user['username']
@@ -161,18 +161,6 @@ def success():
         session.modified = True
 
         return redirect(url_for('auth.confirm_signup', subscription_completed=True))
-
-    except cognito.exceptions.UsernameExistsException:
-        flash("This username already exists.", "danger")
-    except cognito.exceptions.InvalidPasswordException:
-        flash("Invalid password format.", "danger")
-    except Exception as e:
-        print("Cognito creation failed:", str(e))
-        print(traceback.format_exc())
-        flash("Error creating your account. Please try again.", "danger")
-
-    return redirect(url_for('auth.signup'))
-
 
     except cognito.exceptions.UsernameExistsException:
         flash("This username already exists.", "danger")
