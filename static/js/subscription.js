@@ -35,21 +35,28 @@ function initializeSubscription() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest' // 👈 Required for Flask to return JSON on session errors
                 },
                 credentials: 'include'
             });
 
-            const contentType = checkoutResponse.headers.get('content-type') || '';
             const rawText = await checkoutResponse.text();
             console.warn("⚠️ RAW RESPONSE:", rawText.slice(0, 300));
 
+            const contentType = checkoutResponse.headers.get('content-type') || '';
+
             if (!checkoutResponse.ok) {
-                throw new Error(`Bad response: ${checkoutResponse.status}`);
+                if (rawText.includes('<!DOCTYPE html')) {
+                    console.warn("Redirected to login page — not authenticated.");
+                    window.location.href = '/login';
+                    return;
+                }
+
+                throw new Error(`Subscription failed: ${checkoutResponse.status}`);
             }
 
             if (!contentType.includes('application/json')) {
-                throw new Error("Unexpected response format: expected JSON, received HTML");
+                throw new Error('Expected JSON but got non-JSON content');
             }
 
             const data = JSON.parse(rawText);
@@ -57,11 +64,12 @@ function initializeSubscription() {
 
             console.log('Redirecting to Stripe checkout...');
             stripe.redirectToCheckout({ sessionId: data.id });
+
         } catch (error) {
             console.error('Subscription error:', error);
             button.textContent = 'Subscribe';
             button.disabled = false;
-            alert(error.message || 'An error occurred while processing your subscription');
+            alert(error.message || 'An error occurred during subscription.');
         }
     }
 
