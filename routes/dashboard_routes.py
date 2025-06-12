@@ -27,7 +27,9 @@ def dashboard():
 @verify_account
 def database():
     user_id = session.get('user', {}).get('user_id')
-    excel_key = f"uploads/{user_id}_master.xlsx"
+    username = session.get('user', {}).get('username')
+    user_prefix = username.split('@')[0] if username else 'default'
+    excel_key = f"uploads/{user_prefix}_master.xlsx"
 
     # Default values
     excel_file = None
@@ -36,15 +38,15 @@ def database():
     # Check if Excel file exists, and load + render it
     try:
         s3_client.head_object(Bucket=excel_bucket, Key=excel_key)
-        excel_file = f"{user_id}_master.xlsx"
-        df = read_excel_from_s3(user_id)
+        excel_file = f"{user_prefix}_master.xlsx"
+        df = read_excel_from_s3(user_prefix)
         df.dropna(how="all", inplace=True)
         table_html = df.to_html(classes="table table-striped table-bordered", index=False)
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] not in ['404', 'NoSuchKey']:
             raise
     except Exception as e:
-        print(f"Error reading Excel for user {user_id}: {e}")
+        print(f"Error reading Excel for user {user_prefix}: {e}")
 
     # Get list of uploaded PDFs
     pdf_prefix = f"uploads/{user_id}/"
@@ -381,8 +383,9 @@ def handle_uploaded_file():
 @dashboard_bp.route('/dashboard/download-excel/<filename>')
 @login_required
 def download_master_excel(filename):
-    user_id = session.get('user').get('user_id')
-    expected_filename = f"{user_id}_master.xlsx"
+    username = session.get('user').get('username')
+    user_prefix = username.split('@')[0] if username else 'default'
+    expected_filename = f"{user_prefix}_master.xlsx"
 
     if filename != expected_filename:
         abort(403)  #prevent access to other users' files
