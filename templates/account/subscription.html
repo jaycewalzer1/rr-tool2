@@ -1,10 +1,24 @@
 {% extends "account.html" %}
 
+{% block title %}Subscription - CRE: AI Solutions{% endblock %}
+
 {% block account_content %}
-<div class="subscription-container">
-    <div class="subscription-header">
-        <h2>Subscription Management</h2>
-        <p>Purchase a plan to access all features of the tool</p>
+<div class="account-wrapper">
+    <div class="account-header">
+        <h1>Subscription Management</h1>
+        <p>Purchase a plan to access all features of the tool.</p>
+    </div>
+
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
     </div>
 
     <div class="plan-grid">
@@ -14,9 +28,11 @@
                 <span class="price">$9.99/month</span>
             </div>
             <div class="plan-features">
-                <p>Access to all mapping and analysis tools</p>
+                <ul>
+                    <li>Access to all mapping and analysis tools</li>
+                </ul>
             </div>
-            <button class="subscribe-btn" data-plan-id="basic">Subscribe</button>
+            <button class="cta-button subscribe-btn" data-plan-id="basic">Subscribe</button>
         </div>
     </div>
 </div>
