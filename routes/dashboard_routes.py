@@ -362,16 +362,17 @@ def files():
 def handle_uploaded_file():
     data = request.get_json()
     filename = data.get('filename')
-    user_id = session.get('user', {}).get('user_id')
+    username = session.get('user', {}).get('username')
+    user_prefix = username.split('@')[0] if username else 'default'
 
-    if not filename or not user_id:
+    if not filename or not user_prefix:
         return jsonify({'error': 'Missing filename or user_id'}), 400
 
     try:
         # Call your OCR + Excel logic here
-        result = process_uploaded_pdf(user_id, filename)
+        result = process_uploaded_pdf(user_prefix, filename)
 
-        df = read_excel_from_s3(user_id)
+        df = read_excel_from_s3(user_prefix)
         return jsonify({
             'message': 'File processed successfully',
             'excel_key': result['excel_s3_key']
@@ -411,9 +412,10 @@ def download_master_excel(filename):
 @dashboard_bp.route('/excel-preview')
 @login_required
 def excel_preview():
-    user_id = session['user']['user_id']
+    username = session['user']['username']
+    user_prefix = username.split('@')[0] if username else 'default'
     try:
-        df = read_excel_from_s3(user_id)
+        df = read_excel_from_s3(user_prefix)
 
         df.dropna(how='all', inplace=True)
 
