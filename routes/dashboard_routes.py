@@ -362,6 +362,7 @@ def files():
 def handle_uploaded_file():
     data = request.get_json()
     filename = data.get('filename')
+    user_id = session.get('user', {}).get('user_id')
     username = session.get('user', {}).get('username')
     user_prefix = username.split('@')[0] if username else 'default'
 
@@ -370,7 +371,7 @@ def handle_uploaded_file():
 
     try:
         # Call your OCR + Excel logic here
-        result = process_uploaded_pdf(user_prefix, filename)
+        result = process_uploaded_pdf(user_id, user_prefix, filename)
 
         df = read_excel_from_s3(user_prefix)
         return jsonify({
