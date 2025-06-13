@@ -123,65 +123,40 @@ def confirm_signup():
         return redirect(url_for('auth.signup'))
 
     form = ConfirmForm()
+
     if form.validate_on_submit():
         username = session['user']['username']
-        password = session['user'].get('password')  # stored temporarily in session
-
         confirmation_code = form.confirmation_code.data
-        
+
         try:
             secret_hash = get_secret_hash(username, COGNITO_APP_CLIENT_ID)
-            cognito.confirm_sign_up(
+            print(f"🔐 Verifying code for user: {username}")
+
+            response = cognito.confirm_sign_up(
                 ClientId=COGNITO_APP_CLIENT_ID,
                 Username=username,
                 ConfirmationCode=confirmation_code,
                 SecretHash=secret_hash
             )
+            print("✅ Confirmation successful:", response)
 
-            # Authenticate
-            auth_response = cognito.initiate_auth(
-                ClientId=COGNITO_APP_CLIENT_ID,
-                AuthFlow='USER_PASSWORD_AUTH',
-                AuthParameters={
-                    'USERNAME': username,
-                    'PASSWORD': password,
-                    'SECRET_HASH': secret_hash
-                }
-            )
-
-            # Save auth tokens
-            session['auth'] = {
-                'access_token': auth_response['AuthenticationResult']['AccessToken'],
-                'refresh_token': auth_response['AuthenticationResult']['RefreshToken'],
-                'id_token': auth_response['AuthenticationResult']['IdToken']
-            }
-
-            # Get user info
-            response = cognito.get_user(AccessToken=session['auth']['access_token'])
-            user_data = {attr['Name']: attr['Value'] for attr in response['UserAttributes']}
-            
-            session['user'] = {
-                'email': user_data.get('email', ''),
-                'username': user_data.get('preferred_username', ''),
-                'user_id': user_data.get('sub', '')
-            }
-
-            # Clean up
+            # Clean up session
             session['user'].pop('password', None)
             cleanup_session()
 
-            flash('Account confirmed and logged in successfully!', 'success')
-            return redirect(url_for('dashboard/files.html'))
+            flash('Account confirmed successfully! Please log in.', 'success')
+            return redirect(url_for('auth.login'))
 
         except cognito.exceptions.ExpiredCodeException:
-            flash('The confirmation code has expired.', 'warning')
+            flash('The confirmation code has expired. Please request a new one.', 'warning')
         except cognito.exceptions.CodeMismatchException:
-            flash('Invalid confirmation code.', 'danger')
+            flash('Invalid confirmation code. Please try again.', 'danger')
         except Exception as e:
-            print(f"Confirmation error: {str(e)}")
-            flash('An error occurred. Please try again.', 'danger')
+            print(f"❌ Unexpected confirmation error: {str(e)}")
+            flash('An unexpected error occurred during confirmation.', 'danger')
 
     return render_template('account/confirm_signup.html', form=form)
+
 
 
 
