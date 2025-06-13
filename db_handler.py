@@ -10,6 +10,9 @@ pdf_bucket = os.getenv('S3_BUCKET_NAME_PDF')
 excel_bucket = os.getenv('S3_BUCKET_NAME_EXCEL')
 
 def process_uploaded_pdf(user_id, user_prefix, filename):
+    print(f"[PROCESS] user_id: {user_id}")
+    print(f"[PROCESS] user_prefix: {user_prefix}")
+
     # Define S3 keys
     pdf_key = f"uploads/{user_id}/{filename}"
     excel_key = f"uploads/{user_prefix}_master.xlsx"
