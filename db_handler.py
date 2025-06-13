@@ -9,15 +9,15 @@ s3_client = boto3.client('s3')
 pdf_bucket = os.getenv('S3_BUCKET_NAME_PDF')
 excel_bucket = os.getenv('S3_BUCKET_NAME_EXCEL')
 
-def process_uploaded_pdf(user_id, filename):
+def process_uploaded_pdf(user_id, user_prefix, filename):
     # Define S3 keys
     pdf_key = f"uploads/{user_id}/{filename}"
-    excel_key = f"uploads/{user_id}_master.xlsx"
+    excel_key = f"uploads/{user_prefix}_master.xlsx"
 
     # Construct real file paths using the original filename
     temp_dir = tempfile.gettempdir()
     local_pdf_path = os.path.join(temp_dir, filename)
-    local_excel_path = os.path.join(temp_dir, f"{user_id}_master.xlsx")
+    local_excel_path = os.path.join(temp_dir, f"{user_prefix}_master.xlsx")
 
     # Download the PDF from S3
     print(f"Downloading PDF from: bucket={pdf_bucket}, key={pdf_key}")
