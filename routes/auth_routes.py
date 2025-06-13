@@ -250,14 +250,21 @@ def logout():
 @auth_bp.route('/resend-confirmation-code', methods=['POST'])
 def resend_confirmation_code():
     try:
+        username = session.get('user', {}).get('username')
+        if not username:
+            return jsonify({'error': 'User session missing'}), 400
+
         secret_hash = get_secret_hash(username, COGNITO_APP_CLIENT_ID)
+
         cognito.resend_confirmation_code(
             ClientId=COGNITO_APP_CLIENT_ID,
             Username=username,
             SecretHash=secret_hash
         )
+
         return jsonify({'success': True}), 200
+
     except Exception as e:
         print("Resend code error:", str(e))
-        return jsonify({'error': 'Failed to resend confirmation code'}), 400
+        return jsonify({'error': 'Failed to resend confirmation code'}), 500
 
