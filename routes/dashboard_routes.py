@@ -9,6 +9,7 @@ import boto3
 import botocore
 import tempfile
 from db_handler import process_uploaded_pdf
+import traceback
 
 s3_client = boto3.client('s3')
 excel_bucket = os.getenv('S3_BUCKET_NAME_EXCEL')
@@ -379,8 +380,10 @@ def handle_uploaded_file():
             'excel_key': result['excel_s3_key']
         })
     except Exception as e:
-        print(f"Error processing uploaded file: {e}")
-        return jsonify({'error': 'Processing failed'}), 500
+        return jsonify({
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
 
 @dashboard_bp.route('/dashboard/download-excel/<filename>')
 @login_required
