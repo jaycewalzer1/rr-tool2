@@ -29,6 +29,11 @@ nav {
     transform: translateY(-2px);
 }
 
+main {
+    padding-top: 90px; /* or however tall your header is */
+}
+
+
 .nav-right {
     display: flex;
     gap: 1.5rem;
