@@ -424,3 +424,20 @@ def excel_preview():
         return render_template('dashboard/excel_preview.html', table_html=table_html)
     except Exception as e:
         return f"Failed to load Excel data: {str(e)}", 500
+
+
+@dashboard_bp.route('/debug')
+@login_required
+def debug_processing_args():
+    user_id = session.get('user', {}).get('user_id')
+    username = session.get('user', {}).get('username')
+    user_prefix = username.split('@')[0] if username else 'default'
+
+    return jsonify({
+        'debug': {
+            'user_id': user_id,
+            'user_prefix': user_prefix,
+        }
+    })
+
+
