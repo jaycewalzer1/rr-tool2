@@ -26,7 +26,7 @@ async function handleResendCode(e) {
     const username = button.getAttribute('data-username');
 
     try {
-        const response = await fetch('/auth/resend-confirmation-code', {
+        const response = await fetch('/resend-confirmation-code', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -97,5 +97,3 @@ async function handleApiError(response) {
     }
     return response.json().catch(() => ({}));
 }
-
-

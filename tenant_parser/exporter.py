@@ -21,6 +21,7 @@ csv_data['Zip Code'] = csv_data['Zip Code'].astype(str).str.strip()
 csv_data['City'] = csv_data['City'].str.strip().str.lower()
 csv_data['State Name'] = csv_data['State Name'].str.strip().str.lower()
 csv_data['State Abbreviation'] = csv_data['State Abbreviation'].str.strip().str.upper()
+city_list_path = os.path.join(os.path.dirname(__file__), 'city_list.tsv')
 from openpyxl.styles import PatternFill, Font
 from openpyxl.utils import get_column_letter
 def generate_summary_sheet(pdf_path, summary_sheet, data_sheet, pdf_name, anchor_tenants, popular_tenants):
