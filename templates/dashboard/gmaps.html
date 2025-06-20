@@ -34,7 +34,33 @@
         <div id="mapLoader" style="display: none; text-align: center; padding: 10px;">
             <em>Loading...</em>
         </div>
-    </div>
+    </div>    
+    {% if address_list %}
+        <ul id = "address-list" class="pdf-list" hidden>
+            {% for address in address_list %}
+                <li>{{ address }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+                <p>No Addresses were found.</p>
+    {% endif %}
+
+    {% if popup_html %}
+        <ul id = "popup-list" class="pdf-list" hidden>
+            {% for popup in popup_html %}
+                <li>{{ popup }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if rent_list %}
+        <ul id = "rent-list" class="pdf-list" hidden>
+            {% for rent in rent_list %}
+                <li>{{ rent }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
 {% endblock %}
 
 {% block extra_styles %}

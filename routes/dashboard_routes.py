@@ -3,13 +3,15 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from models import User, db
 from decorators import verify_account, login_required
 import stripe
-import os
 from datetime import datetime
 import boto3
 import botocore
 import tempfile
 from db_handler import process_uploaded_pdf
 import traceback
+from dotenv import load_dotenv
+load_dotenv(override=True)
+import os
 
 s3_client = boto3.client('s3')
 excel_bucket = os.getenv('S3_BUCKET_NAME_EXCEL')
@@ -65,9 +67,69 @@ def database():
 @login_required
 @verify_account
 def gmaps():
+    user_id = session.get('user', {}).get('user_id')
+    username = session.get('user', {}).get('username')
+    user_prefix = username.split('@')[0] if username else 'default'
+    excel_key = f"uploads/{user_prefix}_master.xlsx"
+
+    # Default values
+    excel_file = None
+    address_list = None
+    rent_list = None
+    popup_html = []
+
+    # Check if Excel file exists, and load + render it
+    try:
+        s3_client.head_object(Bucket=excel_bucket, Key=excel_key)
+        excel_file = f"{user_prefix}_master.xlsx"
+        df = read_excel_from_s3(user_prefix)
+        df.dropna(how="all", inplace=True)
+        
+        # Create popup_html as a list of HTML-formatted strings, one per row
+        headers = df.columns
+        for _, row in df.iterrows():
+            # Card container
+            html = '<div style="font-family: \'Roboto\', \'Arial\', sans-serif; font-size: 14px; width: 300px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden;">'
+            
+            # Card content
+            html += '<div style="padding: 16px; max-height: 200px; overflow-y: auto;">'
+            
+            for header in headers:
+                value = row[header]
+                # Check for NaN, None before displaying
+                if value is not None and str(value).strip() and (not isinstance(value, float) or value == value):
+                    html += '<div style="margin-bottom: 8px; display: table; width: 100%;">'
+                    html += f'<strong style="display: table-cell; width: 40%; color: #555;">{header}:</strong>'
+                    html += f'<span style="display: table-cell; color: #777;">{value}</span>'
+                    html += '</div>'
+            
+            html += '</div></div>' # Close content and container
+            popup_html.append(html)
+
+        # Extract address list from "Address" column
+        if "Address" in df.columns:
+            address_list = df["Address"].fillna("NaN").astype(str).tolist()
+        else:
+            print('"Address" column not found in the sheet.')
+
+        # Extract rent list from "Annual Rent" column
+        if "Annual Rent" in df.columns:
+            rent_list = df["Annual Rent"].fillna("NaN").astype(str).tolist()
+        else:
+            print('"Annual Rent" column not found in the sheet.')
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] not in ['404', 'NoSuchKey']:
+            raise
+    except Exception as e:
+        print(f"Error reading Excel for user {user_prefix}: {e}")
+
+
     return render_template(
         'dashboard/gmaps.html',
-        GOOGLE_MAPS_API_KEY=os.getenv("GOOGLE_MAPS_API_KEY")  # or use current_app.config["GOOGLE_MAPS_API_KEY"]
+        GOOGLE_MAPS_API_KEY=os.getenv("GOOGLE_MAPS_API_KEY"),  # or use current_app.config["GOOGLE_MAPS_API_KEY"]
+        address_list=address_list,
+        popup_html=popup_html,
+        rent_list=rent_list,
     )
 
 @dashboard_bp.route('/subscription/status')
