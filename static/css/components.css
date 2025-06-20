@@ -76,17 +76,130 @@
     color: var(--black);
 }
 
+/* Excel-style Table */
+.excel-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-family: "Calibri", sans-serif;
+    font-size: 10pt;
+    color: #000000;
+    line-height: 1.2;
+
+}
+
+.excel-table th,
+.excel-table td {
+    padding: 2px 6px;
+    text-align: left;
+    max-height: 32px;
+    border: 0.2px solid #E4E4E4;
+    background-color: #FFFFFF;
+    font-size: 0.5rem;
+    font-weight: 300;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.excel-table th {
+    font-weight: 400;
+    text-align: left;
+    background-color: #F8F8F8;
+    font-size: 0.75rem;
+}
+
+.excel-table td.number {
+    text-align: right;
+    font-size: 0.75rem;
+    font-weight: 300;
+}
+
+.excel-table td.date {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 300;
+}
+
+.excel-table td.pdf-name,
+.excel-table td.tenant-name {
+    max-width: 150px;
+    max-height: 32px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.excel-table tr {
+    transition: background-color 0.2s ease;
+}
+
+.excel-table tr:hover {
+    background-color: #F8F8F8;
+}
+
+.excel-table .selected {
+    border: 1px solid #0070C0;
+    background-color: #E4F0FF;
+}
+
+/* Override default table styles for Excel preview */
+.excel-preview {
+    overflow-x: auto;
+    overflow-y: auto;
+    margin-top: 1rem;
+    border: 0.5px solid #E4E4E4;
+    background-color: #FFFFFF;
+    max-height: 600px;
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+}
+
+.excel-preview .excel-table {
+    min-width: 100%;
+    max-width: 800px;
+    width: 100%;
+}
+
+.excel-preview::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.excel-preview::-webkit-scrollbar-track {
+    background: #F8F8F8;
+}
+
+.excel-preview::-webkit-scrollbar-thumb {
+    background: #E4E4E4;
+    border-radius: 3px;
+}
+
+.excel-preview::-webkit-scrollbar-thumb:hover {
+    background: #CCCCCC;
+}
+
 /* Links */
 .download-link {
-    color: var(--primary);
+    display: block;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto 1rem;
+    padding: 1rem 2rem;
+    background-color: #2D1B46;
+    color: white;
     text-decoration: none;
     font-weight: 600;
-    transition: color 0.2s ease;
+    text-align: center;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
 }
 
 .download-link:hover {
-    text-decoration: underline;
-    color: var(--primary-dark);
+    background-color: #3D2B56;
+    text-decoration: none;
 }
 
 /* Error Messages */
