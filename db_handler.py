@@ -49,8 +49,12 @@ def process_uploaded_pdf(user_id, user_prefix, filename):
 
     # Upload the updated Excel file back to S3
     print(f"Uploading updated Excel to: bucket={excel_bucket}, key={excel_key}")
-    s3_client.upload_file(local_excel_path, excel_bucket, excel_key)
-
+    s3_client.upload_file(
+        local_excel_path,
+        excel_bucket,
+        excel_key,
+        ExtraArgs={'ACL': 'bucket-owner-full-control'}
+    )
     return {
         'message': 'PDF processed and data added to master Excel.',
         'excel_s3_key': excel_key
