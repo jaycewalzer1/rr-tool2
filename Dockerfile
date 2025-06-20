@@ -30,4 +30,4 @@ COPY . .
 EXPOSE 5000
 
 # Use Gunicorn in production
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app", "--timeout", "300", "--access-logfile", "-", "--error-logfile", "-", "--capture-output", "--log-level", "debug"]
