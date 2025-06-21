@@ -94,32 +94,22 @@ function initializeMap() {
             }
         ]       
     });
+
+    // Add zoom control handlers
+    document.getElementById('zoom-in').addEventListener('click', () => {
+        map.setZoom(map.getZoom() + 1);
+    });
+
+    document.getElementById('zoom-out').addEventListener('click', () => {
+        map.setZoom(map.getZoom() - 1);
+    });
+
     for (var i = 0; i < addresses.length; i++){
         if (addresses[i] && addresses[i] !== 'NaN') {
             console.log(addresses[i]);
             geocodeAddress(addresses[i], i);
         }
     }
-
-    /*const form = document.getElementById('addressForm');
-    form?.addEventListener('submit', handleAddressSubmit);
-
-    const autocompleteEl = document.querySelector('gmpx-place-autocomplete');
-    if (autocompleteEl) {
-        autocompleteEl.addEventListener('gmpx-placechange', (event) => {
-            const place = event.detail;
-            if (place && place.location) {
-                const latLng = {
-                    lat: place.location.lat,
-                    lng: place.location.lng,
-                };
-
-                addMarker(latLng, place.displayName || "Selected Location");
-                map.setCenter(latLng);
-                map.setZoom(15);
-            }
-        });
-    }*/
 }
 
 function handleAddressSubmit(e) {
