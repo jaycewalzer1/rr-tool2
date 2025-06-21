@@ -1,11 +1,11 @@
 /* DASHBOARD WRAPPER */
 .dashboard-wrapper {
     display: flex;
-    flex-wrap: wrap;
     min-height: 100vh;
     background-color: var(--white-light);
     padding: 2rem;
     gap: 2rem;
+    position: relative;
 }
 
 /* SIDEBAR */
@@ -17,8 +17,12 @@
     box-shadow: var(--glass-shadow);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: var(--radius-xl);
+    position: sticky;
+    top: 2rem;
+    min-height: calc(100vh - 4rem);
 }
 
+/* SIDEBAR */
 .sidebar h2 {
     color: var(--black);
     margin-bottom: 1.5rem;
@@ -45,10 +49,13 @@
 
 /* MAIN CONTENT */
 .main {
-    flex: 1 1 0;
+    flex: 1;
+    min-width: 0; /* Prevents content from overflowing */
     padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
+    max-width: 100%;
+    overflow-x: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 /* SECTION HEADER */
@@ -89,6 +96,9 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
     padding: 2rem;
     box-shadow: var(--glass-shadow);
+    flex: 1;
+    min-width: 0;
+    padding: 1rem;
 }
 
 .content-box p {
