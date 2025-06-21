@@ -8,9 +8,6 @@
 
         {% if excel_file %}
             <div style="margin-top: 2rem; text-align: center;">
-                <a class="download-link" href="{{ url_for('dashboard.download_master_excel', filename=excel_file) }}">
-                    Download Excel File
-                </a>
                 <div class="excel-preview">
                     <table class="excel-table">
                         {{ table_html | safe }}
