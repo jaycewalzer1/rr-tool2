@@ -29,8 +29,12 @@
     <div class="map-container">
         <div class="search-container">
         </div>
-
-        <div id="map" style="height: 600px; width: 100%;"></div>
+        
+        <div id="map" style="height: 600px; width: 100%; position: relative;"></div>
+        <div class="zoom-controls">
+            <button id="zoom-in" class="zoom-button">+</button>
+            <button id="zoom-out" class="zoom-button">-</button>
+        </div>
         <div id="mapLoader" style="display: none; text-align: center; padding: 10px;">
             <em>Loading...</em>
         </div>
@@ -106,6 +110,31 @@
         }
 
         .search-container button:hover {
+            background-color: #0056b3;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: #fff;
+            padding: 5px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .zoom-button {
+            padding: 5px 10px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .zoom-button:hover {
             background-color: #0056b3;
         }
     </style>
