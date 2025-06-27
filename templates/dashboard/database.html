@@ -7,15 +7,95 @@
         <h2>Your Master Database</h2>
 
         {% if excel_file %}
-            <div style="margin-top: 2rem; text-align: center;">
+            <div class="search-container">
+                <input type="text" 
+                       id="searchBox" 
+                       class="search-box" 
+                       placeholder="Search in table..." 
+                       aria-label="Search table">
+            </div>
+            <div style="margin-top: 1rem; text-align: center;">
                 <div class="excel-preview">
-                    <table class="excel-table">
-                        {{ table_html | safe }}
-                    </table>
+                    {{ table_html | safe }}
                 </div>
+                <p id="noResults" style="display: none;">No results found.</p>
             </div>
         {% else %}
             <p>No database has been generated yet. Please upload PDFs in Marketing Materials to begin.</p>
         {% endif %}
     </div>
+
+    <script>
+    function filterTable() {
+        console.log("[filterTable] triggered");
+
+        const input = document.getElementById('searchBox');
+        const filter = input.value.toLowerCase().trim();
+        console.log("[filterTable] search value: ", filter);
+
+        const table = document.querySelector('.excel-table');
+        if (!table) {
+            console.warn("[filterTable] .excel-table not found");
+            return;
+        }
+
+        const tbody = table.querySelector('tbody');
+        if (!tbody) {
+            console.warn("[filterTable] tbody not found inside .excel-table");
+            return;
+        }
+
+        const rows = tbody.getElementsByTagName('tr');
+        console.log("[filterTable] found rows count: ", rows.length);
+
+        let anyMatches = false;
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const cells = row.getElementsByTagName('td');
+
+            let rowMatches = false;
+
+            for (let j = 0; j < cells.length; j++) {
+                const cell = cells[j];
+                if (cell) {
+                    const text = cell.textContent || cell.innerText;
+                    if (text.toLowerCase().includes(filter)) {
+                        rowMatches = true;
+                        anyMatches = true;
+                        break;
+                    }
+                }
+            }
+
+            row.style.display = filter === '' || rowMatches ? '' : 'none';
+        }
+
+        console.log("[filterTable] anyMatches: ", anyMatches);
+
+        // Show/hide no results message
+        const noResults = document.getElementById('noResults');
+        if (noResults) {
+            noResults.style.display = filter !== '' && !anyMatches ? 'block' : 'none';
+            console.log("[filterTable] noResults display: ", noResults.style.display);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("[DOMContentLoaded] setting up input event listener");
+        const searchBox = document.getElementById('searchBox');
+        if (searchBox) {
+            searchBox.addEventListener('input', function() {
+                console.log("[searchBox] input event fired, value: ", this.value);
+                filterTable();
+            });
+            searchBox.addEventListener('search', function() {
+                console.log("[searchBox] search event fired, value: ", this.value);
+                filterTable();
+            });
+        } else {
+            console.warn("[DOMContentLoaded] searchBox not found");
+        }
+    });
+    </script>
 {% endblock %}

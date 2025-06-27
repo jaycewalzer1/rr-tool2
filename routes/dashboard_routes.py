@@ -44,7 +44,7 @@ def database():
         excel_file = f"{user_prefix}_master.xlsx"
         df = read_excel_from_s3(user_prefix)
         df.dropna(how="all", inplace=True)
-        table_html = df.to_html(classes="table table-striped table-bordered", index=False)
+        table_html = df.to_html(classes="excel-table table table-striped table-bordered", index=False)
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] not in ['404', 'NoSuchKey']:
             raise
@@ -485,7 +485,7 @@ def excel_preview():
 
         df.dropna(how='all', inplace=True)
 
-        table_html = df.to_html(classes="table table-striped table-bordered", index=False)
+        table_html = df.to_html(classes="excel-table table table-striped table-bordered", index=False)
         return render_template('dashboard/excel_preview.html', table_html=table_html)
     except Exception as e:
         return f"Failed to load Excel data: {str(e)}", 500

@@ -80,24 +80,25 @@
 .excel-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 1rem;
-    font-family: "Calibri", sans-serif;
-    font-size: 10pt;
+    border-spacing: 0;
+    margin-top: 0.5rem;
+    font-family: "Calibri", Arial, sans-serif;
+    font-size: 9px;
     color: #000000;
-    line-height: 1.2;
-
+    line-height: 1.1;
+    table-layout: fixed;
 }
 
 .excel-table th,
 .excel-table td {
-    padding: 2px 6px;
+    padding: 0.5px 2px;
     text-align: left;
-    max-height: 32px;
-    border: 0.2px solid #E4E4E4;
+    height: 18px;
+    border: 0.5px solid #E0E0E0;
     background-color: #FFFFFF;
-    font-size: 0.5rem;
+    font-size: 9px;
     font-weight: 300;
-    line-height: 1.2;
+    line-height: 1.1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -106,61 +107,30 @@
 .excel-table th {
     font-weight: 400;
     text-align: left;
-    background-color: #F8F8F8;
-    font-size: 0.75rem;
+    background-color: #F0F0F0;
+    font-size: 9px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-.excel-table td.number {
-    text-align: right;
-    font-size: 0.75rem;
-    font-weight: 300;
-}
-
-.excel-table td.date {
-    text-align: center;
-    font-size: 0.75rem;
-    font-weight: 300;
-}
-
-.excel-table td.pdf-name,
-.excel-table td.tenant-name {
-    max-width: 150px;
-    max-height: 32px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.excel-table tr {
-    transition: background-color 0.2s ease;
-}
-
-.excel-table tr:hover {
-    background-color: #F8F8F8;
-}
-
-.excel-table .selected {
-    border: 1px solid #0070C0;
-    background-color: #E4F0FF;
-}
-
-/* Override default table styles for Excel preview */
 .excel-preview {
     overflow-x: auto;
     overflow-y: auto;
-    margin-top: 1rem;
-    border: 0.5px solid #E4E4E4;
+    margin-top: 0.5rem;
+    border: 0.5px solid #E0E0E0;
     background-color: #FFFFFF;
-    max-height: 600px;
-    max-width: 800px;
+    max-height: 80vh;
+    width: 100%;
     display: flex;
     flex-direction: column;
 }
 
 .excel-preview .excel-table {
-    min-width: 100%;
-    max-width: 800px;
+    margin: 0;
     width: 100%;
+    min-width: 100%;
+    table-layout: fixed;
 }
 
 .excel-preview::-webkit-scrollbar {
@@ -179,6 +149,41 @@
 
 .excel-preview::-webkit-scrollbar-thumb:hover {
     background: #CCCCCC;
+}
+
+.excel-table .selected {
+    border: 1px solid #0070C0;
+    background-color: #E4F0FF;
+}
+
+/* Search Box */
+.search-container {
+    margin: 1.5rem 0;
+    max-width: 400px;
+    width: 100%;
+    position: relative;
+}
+
+.search-box {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    border: 1px solid var(--gray);
+    border-radius: 0.5rem;
+    font-size: clamp(0.9rem, 2vw, 1rem);
+    background: var(--white-light) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E") no-repeat 1rem center;
+    background-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.search-box:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(100, 100, 255, 0.15);
+}
+
+.search-box::placeholder {
+    color: var(--gray-dark);
+    opacity: 0.7;
 }
 
 /* Links */
