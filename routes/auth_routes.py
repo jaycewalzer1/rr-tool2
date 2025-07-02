@@ -116,9 +116,11 @@ def signup():
 @auth_bp.route('/confirm-signup', methods=['GET', 'POST'])
 def confirm_signup():
     if not request.args.get('subscription_completed'):
+        print("⚠️ Missing subscription_completed param, redirecting to /subscription")
         return redirect(url_for('auth.subscription'))
 
     if 'user' not in session or 'username' not in session['user']:
+        print("⚠️ Missing user data in session, redirecting to signup")
         flash("Please sign up first", "warning")
         return redirect(url_for('auth.signup'))
 
@@ -128,9 +130,13 @@ def confirm_signup():
         username = session['user']['username']
         confirmation_code = form.confirmation_code.data
 
+        print(f"\n=== START CONFIRM SIGNUP ===")
+        print(f"Attempting confirmation for username: {username}")
+        print(f"Using code: {confirmation_code}")
+
         try:
             secret_hash = get_secret_hash(username, COGNITO_APP_CLIENT_ID)
-            print(f"🔐 Verifying code for user: {username}")
+            print(f"Generated secret_hash for confirmation: {secret_hash}")
 
             response = cognito.confirm_sign_up(
                 ClientId=COGNITO_APP_CLIENT_ID,
@@ -138,24 +144,38 @@ def confirm_signup():
                 ConfirmationCode=confirmation_code,
                 SecretHash=secret_hash
             )
-            print("✅ Confirmation successful:", response)
+            print(f"✅ Cognito confirm_sign_up response: {response}")
 
             # Clean up session
             session['user'].pop('password', None)
             cleanup_session()
+            print("🧹 Cleaned up session after confirmation")
 
             flash('Account confirmed successfully! Please log in.', 'success')
             return redirect(url_for('auth.login'))
 
-        except cognito.exceptions.ExpiredCodeException:
+        except cognito.exceptions.ExpiredCodeException as e:
+            print(f"⚠️ ExpiredCodeException: {str(e)}")
             flash('The confirmation code has expired. Please request a new one.', 'warning')
-        except cognito.exceptions.CodeMismatchException:
+        except cognito.exceptions.CodeMismatchException as e:
+            print(f"⚠️ CodeMismatchException: {str(e)}")
             flash('Invalid confirmation code. Please try again.', 'danger')
+        except cognito.exceptions.UserNotFoundException as e:
+            print(f"⚠️ UserNotFoundException: {str(e)}")
+            flash('User not found in Cognito.', 'danger')
+        except cognito.exceptions.NotAuthorizedException as e:
+            print(f"⚠️ NotAuthorizedException (maybe already confirmed): {str(e)}")
+            flash('Your account may already be confirmed.', 'info')
         except Exception as e:
-            print(f"❌ Unexpected confirmation error: {str(e)}")
-            flash('An unexpected error occurred during confirmation.', 'danger')
+            import traceback
+            tb = traceback.format_exc()
+            print(f"❌ Unexpected error during confirmation: {str(e)}")
+            print(f"Traceback:\n{tb}")
+            flash(f"Error confirming account: {str(e)}", 'danger')
 
+    print("Rendering confirm signup page")
     return render_template('account/confirm_signup.html', form=form)
+
 
 
 
