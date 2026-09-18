@@ -12,9 +12,9 @@ from pathlib import Path
 import pytest
 from openpyxl import Workbook, load_workbook
 
-import pipeline
-from pipeline import ProcessingError, process_uploaded_pdf
-from tenant_parser.workbook import DATA_HEADERS, append_row, ensure_headers
+from cre import pipeline
+from cre.pipeline import ProcessingError, process_uploaded_pdf
+from cre.tenant_parser.workbook import DATA_HEADERS, append_row, ensure_headers
 
 
 @pytest.fixture

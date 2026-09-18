@@ -71,7 +71,7 @@ across every PDF the user has ever uploaded.
 
 ## How the extraction pipeline works
 
-The parsing logic lives in [`tenant_parser/`](tenant_parser/) and is
+The parsing logic lives in [`cre/tenant_parser/`](cre/tenant_parser/) and is
 deliberately separated from the web layer — it takes a PDF path and an Excel
 path and has no knowledge of Flask, S3 or the logged-in user.
 
@@ -104,10 +104,10 @@ outright (every genuine tenant row quotes a rent), as are recognised note and
 sentence patterns. What survives is then **split on known tenant names**,
 because OCR routinely runs three table rows together into one line. The name
 lists — 874 national retailers and 151 anchor tenants — live in
-[`tenant_parser/constants.py`](tenant_parser/constants.py).
+[`cre/tenant_parser/constants.py`](cre/tenant_parser/constants.py).
 
 **5. Field extraction.** For each tenant segment
-([`tenant_parser/fields.py`](tenant_parser/fields.py)):
+([`cre/tenant_parser/fields.py`](cre/tenant_parser/fields.py)):
 
 | Field | How it is recovered |
 | --- | --- |
@@ -120,11 +120,11 @@ lists — 874 national retailers and 151 anchor tenants — live in
 against the GeoNames US postal-code export (41,483 ZIP/city/state rows, cached
 for the process lifetime) so a misread ZIP does not silently place a Texas
 property in Maine. See
-[`tenant_parser/addresses.py`](tenant_parser/addresses.py).
+[`cre/tenant_parser/addresses.py`](cre/tenant_parser/addresses.py).
 
 **7. Workbook output.** Rows are appended to a `Retail Tenants` sheet and
 summarised on a `Summary 1` sheet
-([`tenant_parser/workbook.py`](tenant_parser/workbook.py)).
+([`cre/tenant_parser/workbook.py`](cre/tenant_parser/workbook.py)).
 
 > **A note on openpyxl:** both `sheet.cell()` and `sheet.iter_rows()`
 > materialise cells and advance the sheet's internal row cursor, which silently
@@ -163,10 +163,10 @@ summarised on a `Summary 1` sheet
 Design decisions worth calling out:
 
 - **Application factory.** `create_app()` builds the app from a validated
-  `Config` object ([`config.py`](config.py)). Missing required environment
+  `Config` object ([`cre/config.py`](cre/config.py)). Missing required environment
   variables raise at start-up rather than at first request, so a misconfigured
   container fails its health check instead of serving 500s.
-- **One place derives S3 keys.** [`storage.py`](storage.py) owns the
+- **One place derives S3 keys.** [`cre/storage.py`](cre/storage.py) owns the
   `uploads/<user_id>/…` convention. Tenant isolation is therefore a single
   auditable function rather than a string concatenation repeated in every view.
 - **Uploads bypass the app server.** The browser asks for a presigned PUT URL
@@ -174,8 +174,8 @@ Design decisions worth calling out:
 - **Subscription state is read from Stripe, not mirrored.** The webhook only
   keeps customer metadata in step; entitlement checks query Stripe. There is no
   local copy to drift out of sync.
-- **Parsing is decoupled from the web layer.** `tenant_parser` is importable and
-  testable on its own, which is why the field-extraction tests need no Flask
+- **Parsing is decoupled from the web layer.** `cre.tenant_parser` is importable
+  and testable on its own, which is why the field-extraction tests need no Flask
   context.
 
 ---
@@ -315,7 +315,7 @@ occupy a worker for minutes.
 - **Accounts are created after payment.** The Cognito user is provisioned in the
   Stripe success handler, so an abandoned checkout never leaves a
   half-provisioned user in the pool.
-- **Tenant isolation is centralised.** Every S3 key is built by `storage.py`
+- **Tenant isolation is centralised.** Every S3 key is built by `cre/storage.py`
   from the session's `user_id`; a request cannot address another user's prefix
   by manipulating a filename.
 - **Presigned URLs are short-lived** and scoped to a single object key.
@@ -333,33 +333,43 @@ occupy a worker for minutes.
 
 ## Project layout
 
+All application code lives in a single `cre` package, so there is exactly one
+first-party name on `sys.path`. Templates and static assets live inside the
+package too, which means Flask resolves them from the package root rather than
+from whatever directory the process happened to start in.
+
 ```
 .
-├── app.py                  Application factory, error handlers, request logging
-├── config.py               Environment parsing and validation
-├── wsgi.py                 gunicorn entry point
-├── auth.py                 Cognito client (sign-up, login, token refresh)
-├── decorators.py           @login_required, @verify_account
-├── storage.py              S3 access; sole owner of key derivation
-├── pipeline.py             Download → parse → upload orchestration
-├── models.py               Typed SQLAlchemy declarative models
-├── forms.py                WTForms definitions
-├── routes/
-│   ├── marketing_routes.py Public pages, /healthz, favicon
-│   ├── auth_routes.py      Signup, confirmation, login, password reset
-│   ├── dashboard_routes.py Upload, file list, database view, map, export
-│   └── billing_routes.py   Checkout, subscription management, webhooks
-├── tenant_parser/
-│   ├── ocr.py              Page triage, rendering, preprocessing, Tesseract
-│   ├── lines.py            Noise rejection and tenant-row splitting
-│   ├── fields.py           Square feet, rent, dates, PSF extraction
-│   ├── addresses.py        Address parsing and validation
-│   ├── reference.py        Cached GeoNames US postal lookup
-│   ├── workbook.py         Data sheet and summary sheet construction
-│   ├── exporter.py         Public entry point
-│   └── constants.py        Tenant name lists, month abbreviations
-├── tests/                  112 tests
-└── docs/images/            README screenshots
+├── wsgi.py                     gunicorn entry point
+├── cre/
+│   ├── app.py                  Application factory, error handlers, request logging
+│   ├── config.py               Environment parsing and validation
+│   ├── auth.py                 Cognito client (sign-up, login, token refresh)
+│   ├── decorators.py           @login_required, @verify_account
+│   ├── storage.py              S3 access; sole owner of key derivation
+│   ├── pipeline.py             Download → parse → upload orchestration
+│   ├── models.py               Typed SQLAlchemy declarative models
+│   ├── forms.py                WTForms definitions
+│   ├── utils.py                Filename sanitising and shared helpers
+│   ├── logging_config.py       Structured logging and request correlation ids
+│   ├── routes/
+│   │   ├── marketing_routes.py Public pages, /healthz, favicon
+│   │   ├── auth_routes.py      Signup, confirmation, login, password reset
+│   │   ├── dashboard_routes.py Upload, file list, database view, map, export
+│   │   └── billing_routes.py   Checkout, subscription management, webhooks
+│   ├── tenant_parser/
+│   │   ├── ocr.py              Page triage, rendering, preprocessing, Tesseract
+│   │   ├── lines.py            Noise rejection and tenant-row splitting
+│   │   ├── fields.py           Square feet, rent, dates, PSF extraction
+│   │   ├── addresses.py        Address parsing and validation
+│   │   ├── reference.py        Cached GeoNames US postal lookup
+│   │   ├── workbook.py         Data sheet and summary sheet construction
+│   │   ├── exporter.py         Public entry point
+│   │   └── constants.py        Tenant name lists, month abbreviations
+│   ├── templates/              Jinja templates
+│   └── static/                 CSS, JS and images
+├── tests/                      112 tests
+└── docs/images/                README screenshots
 ```
 
 ---

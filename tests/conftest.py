@@ -18,8 +18,8 @@ os.environ["FLASK_ENV"] = "testing"
 from flask import Flask
 from flask.testing import FlaskClient
 
-from app import create_app
-from models import db
+from cre.app import create_app
+from cre.models import db
 
 
 @pytest.fixture
@@ -66,6 +66,6 @@ def logged_in_client(client: FlaskClient) -> FlaskClient:
 def verified_account(monkeypatch: pytest.MonkeyPatch) -> None:
     """Make ``verify_account`` succeed without contacting Cognito."""
     monkeypatch.setattr(
-        "decorators.auth.user_attributes",
+        "cre.decorators.auth.user_attributes",
         lambda _token: {"sub": "cognito-sub-123", "email_verified": "true"},
     )

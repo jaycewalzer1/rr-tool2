@@ -19,8 +19,8 @@ from flask import (
 )
 from werkzeug.wrappers.response import Response as WerkzeugResponse
 
-import auth
-from forms import (
+from cre import auth
+from cre.forms import (
     ConfirmForm,
     ConfirmResetForm,
     LoginForm,
@@ -28,7 +28,7 @@ from forms import (
     ResetPasswordForm,
     SignupForm,
 )
-from utils import start_session
+from cre.utils import start_session
 
 logger = logging.getLogger(__name__)
 

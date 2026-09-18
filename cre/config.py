@@ -141,6 +141,9 @@ def flask_settings(config: Config) -> dict[str, object]:
         "SQLALCHEMY_DATABASE_URI": config.database_uri,
         "SQLALCHEMY_TRACK_MODIFICATIONS": False,
         "SESSION_TYPE": "filesystem",
+        # Flask-Session defaults this to ./flask_session, which shadows the
+        # installed package name and confuses import-classifying tools.
+        "SESSION_FILE_DIR": ".flask_session",
         "SESSION_PERMANENT": True,
         "PERMANENT_SESSION_LIFETIME": config.session_lifetime,
         "SESSION_COOKIE_SECURE": config.is_production,

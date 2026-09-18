@@ -7,13 +7,13 @@ import logging
 import stripe
 from dotenv import load_dotenv
 from flask import Flask, g, render_template, request
+from flask_session import Session
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from config import Config, flask_settings, load_config
-from flask_session import Session  # type: ignore[attr-defined]
-from logging_config import configure_logging, new_request_id
-from models import db
-from routes import register_routes
+from cre.config import Config, flask_settings, load_config
+from cre.logging_config import configure_logging, new_request_id
+from cre.models import db
+from cre.routes import register_routes
 
 logger = logging.getLogger(__name__)
 

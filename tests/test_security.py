@@ -17,8 +17,8 @@ from flask import Flask
 from flask.testing import FlaskClient
 from wtforms import ValidationError
 
-from forms import validate_cognito_password
-from utils import safe_filename
+from cre.forms import validate_cognito_password
+from cre.utils import safe_filename
 
 
 class TestSafeFilename:
@@ -132,7 +132,7 @@ class TestTenantIsolation:
         monkeypatch: pytest.MonkeyPatch,
     ):
         deleted: list[str] = []
-        monkeypatch.setattr("storage.delete_pdf", deleted.append)
+        monkeypatch.setattr("cre.storage.delete_pdf", deleted.append)
 
         response = logged_in_client.delete(
             "/api/s3/files", json={"s3_key": "uploads/someone-else/secret.pdf"}
@@ -147,7 +147,7 @@ class TestTenantIsolation:
         verified_account: None,
         monkeypatch: pytest.MonkeyPatch,
     ):
-        monkeypatch.setattr("storage.presigned_upload_url", lambda key: f"https://s3/{key}")
+        monkeypatch.setattr("cre.storage.presigned_upload_url", lambda key: f"https://s3/{key}")
 
         response = logged_in_client.post(
             "/api/s3/upload-url", json={"filename": "../../victim/roll.pdf"}
@@ -168,9 +168,9 @@ class TestSessionHygiene:
         self, client: FlaskClient, monkeypatch: pytest.MonkeyPatch
     ):
         tokens = {"access_token": "a", "refresh_token": "r", "id_token": "i"}
-        monkeypatch.setattr("auth.authenticate", lambda *_: tokens)
+        monkeypatch.setattr("cre.auth.authenticate", lambda *_: tokens)
         monkeypatch.setattr(
-            "auth.user_attributes", lambda _: {"sub": "sub-1", "email_verified": "true"}
+            "cre.auth.user_attributes", lambda _: {"sub": "sub-1", "email_verified": "true"}
         )
 
         client.post("/login", data={"email": "tester@example.com", "password": "Str0ng!Passw0rd"})

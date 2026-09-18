@@ -23,7 +23,7 @@ htmlcov/
 
 # Runtime state
 instance/
-flask_session/
+.flask_session/
 app.db
 *.log
 
@@ -39,8 +39,8 @@ ecr.pem
 node_modules/
 .npm
 .npmrc
-static/css/style.css
-static/css/style.css.map
+cre/static/css/style.css
+cre/static/css/style.css.map
 
 # macOS
 .DS_Store

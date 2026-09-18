@@ -14,9 +14,9 @@ from typing import Any
 from openpyxl import Workbook, load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
-from tenant_parser import addresses, lines, ocr, workbook
-from tenant_parser.constants import anchor_tenants, popular_tenants
-from tenant_parser.fields import build_tenant_row
+from cre.tenant_parser import addresses, lines, ocr, workbook
+from cre.tenant_parser.constants import anchor_tenants, popular_tenants
+from cre.tenant_parser.fields import build_tenant_row
 
 logger = logging.getLogger(__name__)
 

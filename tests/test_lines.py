@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from tenant_parser.lines import clean_lines, extract_tenant_name, split_tenants, starts_new_tenant
+from cre.tenant_parser.lines import (
+    clean_lines,
+    extract_tenant_name,
+    split_tenants,
+    starts_new_tenant,
+)
 
 
 class TestCleanLines:

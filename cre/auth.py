@@ -18,7 +18,7 @@ import boto3
 from botocore.exceptions import ClientError
 from flask import current_app
 
-from config import Config
+from cre.config import Config
 
 logger = logging.getLogger(__name__)
 

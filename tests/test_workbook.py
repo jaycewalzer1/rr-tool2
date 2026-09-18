@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from openpyxl import Workbook
 
-from tenant_parser.workbook import (
+from cre.tenant_parser.workbook import (
     DATA_HEADERS,
     append_row,
     categorise_tenants,

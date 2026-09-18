@@ -17,7 +17,7 @@ install: $(PY) ## Create the virtualenv and install runtime + dev dependencies
 
 .PHONY: run
 run: ## Start the development server on http://127.0.0.1:5000
-	$(PY) app.py
+	$(PY) -m cre.app
 
 .PHONY: lint
 lint: ## Check formatting and lint rules
@@ -35,7 +35,7 @@ typecheck: ## Run static type analysis
 
 .PHONY: test
 test: ## Run the test suite with coverage
-	$(VENV)/bin/pytest --cov=. --cov-report=term-missing
+	$(VENV)/bin/pytest --cov --cov-report=term-missing
 
 .PHONY: check
 check: lint typecheck test ## Everything CI runs

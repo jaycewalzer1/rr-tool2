@@ -25,8 +25,8 @@ from flask import (
 )
 from werkzeug.wrappers.response import Response as WerkzeugResponse
 
-import auth
-from decorators import login_required, verify_account
+from cre import auth
+from cre.decorators import login_required, verify_account
 
 logger = logging.getLogger(__name__)
 

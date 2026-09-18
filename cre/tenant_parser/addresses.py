@@ -13,7 +13,7 @@ import re
 
 import pandas as pd
 
-from tenant_parser.reference import (
+from cre.tenant_parser.reference import (
     CITY_COLUMN,
     STATE_ABBREVIATION_COLUMN,
     STATE_NAME_COLUMN,

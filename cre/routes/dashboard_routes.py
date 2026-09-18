@@ -19,10 +19,10 @@ from flask import (
     session,
 )
 
-import storage
-from decorators import login_required, verify_account
-from pipeline import ProcessingError, process_uploaded_pdf
-from utils import safe_filename, user_prefix
+from cre import storage
+from cre.decorators import login_required, verify_account
+from cre.pipeline import ProcessingError, process_uploaded_pdf
+from cre.utils import safe_filename, user_prefix
 
 logger = logging.getLogger(__name__)
 

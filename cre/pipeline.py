@@ -14,8 +14,8 @@ from pathlib import Path
 
 from openpyxl import Workbook, load_workbook
 
-import storage
-from tenant_parser import export_rent_roll_data_with_ocr
+from cre import storage
+from cre.tenant_parser import export_rent_roll_data_with_ocr
 
 logger = logging.getLogger(__name__)
 

@@ -45,22 +45,19 @@ dev = [
 ]
 
 [tool.setuptools]
-py-modules = [
-    "app",
-    "auth",
-    "config",
-    "decorators",
-    "forms",
-    "logging_config",
-    "models",
-    "pipeline",
-    "storage",
-    "utils",
-    "wsgi",
-]
+py-modules = ["wsgi"]
 
 [tool.setuptools.packages.find]
-include = ["routes*", "tenant_parser*"]
+include = ["cre*"]
+
+[tool.setuptools.package-data]
+# Templates, static assets and the GeoNames place table are loaded at runtime,
+# so they have to ship inside the wheel and the container image.
+cre = [
+    "templates/**/*.html",
+    "static/**/*",
+    "tenant_parser/data/*.txt",
+]
 
 [tool.ruff]
 line-length = 100
@@ -84,6 +81,12 @@ ignore = [
     "S101",  # assert is the point of a test suite
     "B008",  # Flask/WTForms idiomatically call in defaults
 ]
+
+[tool.ruff.lint.isort]
+# Stated explicitly so import grouping does not depend on whether a virtualenv
+# happens to be present in the checkout.
+known-first-party = ["cre"]
+known-third-party = ["flask_session"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S105", "S106"]  # hard-coded test credentials are intentional
@@ -120,8 +123,8 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-# The app is a set of top-level modules, so the suite runs from a clean
-# checkout without needing an editable install first.
+# Keeps the suite runnable straight from a clean checkout, without requiring an
+# editable install first.
 pythonpath = ["."]
 addopts = "-q --strict-markers"
 filterwarnings = ["ignore::DeprecationWarning"]

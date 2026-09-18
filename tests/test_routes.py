@@ -8,8 +8,8 @@ import pandas as pd
 import pytest
 from flask.testing import FlaskClient
 
-from pipeline import ProcessingError, ProcessingResult
-from storage import StoredFile
+from cre.pipeline import ProcessingError, ProcessingResult
+from cre.storage import StoredFile
 
 
 @pytest.mark.parametrize(
@@ -60,7 +60,7 @@ class TestFileApi:
             seen.append(user_id)
             return [self.stored_file()]
 
-        monkeypatch.setattr("storage.list_pdfs", fake_list)
+        monkeypatch.setattr("cre.storage.list_pdfs", fake_list)
 
         response = logged_in_client.get("/api/s3/files")
 
@@ -74,7 +74,7 @@ class TestFileApi:
         monkeypatch: pytest.MonkeyPatch,
     ):
         monkeypatch.setattr(
-            "routes.dashboard_routes.process_uploaded_pdf",
+            "cre.routes.dashboard_routes.process_uploaded_pdf",
             lambda **_: ProcessingResult(excel_s3_key="uploads/tester_master.xlsx", rows_added=12),
         )
 
@@ -92,7 +92,7 @@ class TestFileApi:
         def fail(**_: object) -> None:
             raise ProcessingError("Could not parse roll.pdf.")
 
-        monkeypatch.setattr("routes.dashboard_routes.process_uploaded_pdf", fail)
+        monkeypatch.setattr("cre.routes.dashboard_routes.process_uploaded_pdf", fail)
 
         response = logged_in_client.post("/api/s3/files", json={"filename": "roll.pdf"})
 
@@ -118,7 +118,7 @@ class TestMapPage:
         so a tenant name could execute as script.
         """
         monkeypatch.setattr(
-            "storage.read_master",
+            "cre.storage.read_master",
             lambda _prefix: pd.DataFrame(
                 [{"Address": "1 Main St, Austin TX", "Tenant Name": "<img src=x onerror=alert(1)>"}]
             ),
@@ -137,7 +137,7 @@ class TestDatabasePage:
         verified_account: None,
         monkeypatch: pytest.MonkeyPatch,
     ):
-        monkeypatch.setattr("routes.dashboard_routes._load_master", lambda _prefix: None)
-        monkeypatch.setattr("storage.list_pdfs", lambda _user_id: [])
+        monkeypatch.setattr("cre.routes.dashboard_routes._load_master", lambda _prefix: None)
+        monkeypatch.setattr("cre.storage.list_pdfs", lambda _user_id: [])
 
         assert logged_in_client.get("/database").status_code == 200

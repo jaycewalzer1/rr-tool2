@@ -10,7 +10,7 @@ from typing import Any, TypeVar, cast
 from botocore.exceptions import ClientError
 from flask import flash, redirect, session, url_for
 
-import auth
+from cre import auth
 
 logger = logging.getLogger(__name__)
 

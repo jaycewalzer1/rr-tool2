@@ -11,7 +11,7 @@ from typing import ClassVar
 
 import pytest
 
-from tenant_parser.fields import (
+from cre.tenant_parser.fields import (
     MAX_SQUARE_FEET,
     MIN_ANCHOR_PSF,
     MIN_INLINE_PSF,

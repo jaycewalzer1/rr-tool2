@@ -18,8 +18,8 @@ import pandas as pd
 from botocore.exceptions import ClientError
 from flask import current_app
 
-from config import Config
-from tenant_parser.workbook import DATA_SHEET_NAME
+from cre.config import Config
+from cre.tenant_parser.workbook import DATA_SHEET_NAME
 
 logger = logging.getLogger(__name__)
 

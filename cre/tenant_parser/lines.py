@@ -12,7 +12,7 @@ import functools
 import logging
 import re
 
-from tenant_parser.constants import anchor_tenants, popular_tenants
+from cre.tenant_parser.constants import anchor_tenants, popular_tenants
 
 logger = logging.getLogger(__name__)
 

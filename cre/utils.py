@@ -7,7 +7,7 @@ from typing import Final
 
 from flask import session
 
-from auth import AuthTokens
+from cre.auth import AuthTokens
 
 _UNSAFE_FILENAME = re.compile(r"[^A-Za-z0-9._-]+")
 _MAX_FILENAME_LENGTH: Final = 120

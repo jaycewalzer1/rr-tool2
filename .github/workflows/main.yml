@@ -6,6 +6,12 @@ on:
       - main
   workflow_dispatch:
 
+# Deploys are serialised: a second push waits rather than racing the first one
+# onto the same EC2 host.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   REGION: us-east-2
   REPO: cre

@@ -17,8 +17,8 @@ import re
 from datetime import datetime
 from typing import Any
 
-from tenant_parser.constants import anchor_tenants, months_map
-from tenant_parser.lines import extract_tenant_name
+from cre.tenant_parser.constants import anchor_tenants, months_map
+from cre.tenant_parser.lines import extract_tenant_name
 
 logger = logging.getLogger(__name__)
 

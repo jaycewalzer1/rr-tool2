@@ -9,7 +9,10 @@ on:
   workflow_call:
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # Scoped by workflow, not just ref: when the deploy workflow calls this one,
+  # github.workflow resolves to the caller, so the two runs cannot cancel each
+  # other out. Superseded pull request pushes are still cancelled.
+  group: ${{ github.workflow }}-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
