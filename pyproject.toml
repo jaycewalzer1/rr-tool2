@@ -24,7 +24,9 @@ dependencies = [
     "stripe==9.5.0",
     "boto3==1.29.0",
     "botocore==1.32.0",
-    "PyMuPDF==1.24.1",
+    # 1.24.3 was the first release to expose the lowercase `pymupdf` module name
+    # that the OCR layer imports; earlier releases only ship `fitz`.
+    "PyMuPDF==1.24.14",
     "pytesseract==0.3.10",
     "Pillow==10.1.0",
     "pandas==2.2.2",
@@ -40,8 +42,12 @@ dev = [
     "ruff==0.5.0",
     "mypy==1.10.0",
     "pre-commit==3.7.0",
-    "types-pytz",
-    "pandas-stubs",
+    # Stub packages are pinned too: an unpinned pandas-stubs resolves to a
+    # release targeting pandas 3.x and reports type errors against the pinned
+    # pandas 2.2 runtime, so CI would break without a code change.
+    "types-pytz==2024.1.0.20240417",
+    "types-Pillow==10.2.0.20240822",
+    "pandas-stubs==2.2.2.240807",
 ]
 
 [tool.setuptools]
@@ -109,7 +115,6 @@ check_untyped_defs = true
 module = [
     "boto3.*",
     "botocore.*",
-    "fitz.*",
     "flask_session.*",
     "flask_wtf.*",
     "openpyxl.*",

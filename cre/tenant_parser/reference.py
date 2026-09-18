@@ -27,7 +27,9 @@ def reference_data() -> pd.DataFrame:
     so callers can compare without re-normalising on every row.
     """
     frame = pd.read_csv(DATA_FILE, header=None, sep="\t", usecols=[1, 2, 3, 4])
-    frame.columns = [ZIP_COLUMN, CITY_COLUMN, STATE_NAME_COLUMN, STATE_ABBREVIATION_COLUMN]
+    frame.columns = pd.Index(
+        [ZIP_COLUMN, CITY_COLUMN, STATE_NAME_COLUMN, STATE_ABBREVIATION_COLUMN]
+    )
     frame[ZIP_COLUMN] = frame[ZIP_COLUMN].astype(str).str.strip()
     frame[CITY_COLUMN] = frame[CITY_COLUMN].str.strip().str.lower()
     frame[STATE_NAME_COLUMN] = frame[STATE_NAME_COLUMN].str.strip().str.lower()
