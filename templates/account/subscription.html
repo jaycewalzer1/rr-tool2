@@ -39,7 +39,6 @@
 {% endblock %}
 
 {% block extra_scripts %}
-    <script src="https://js.stripe.com/v3/" crossorigin="anonymous"></script>
-    <meta name="stripe-public-key" content="{{ publishable_key }}">
+    <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
     <script src="{{ url_for('static', filename='js/subscription.js') }}"></script>
 {% endblock %}

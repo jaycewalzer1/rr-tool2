@@ -1,48 +1,46 @@
-.env
-__pycache__
-.env.test
-pytest.ini
-.pytest_cache
-test_auth
-*instanceflask_session/
-database1.log
-*.pdf
-*instance
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+build/
+dist/
+.eggs/
 
-# Node
+# Environments
+.venv/
+venv/
+.env
+.env.test
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Runtime state
+instance/
+flask_session/
+app.db
+*.log
+
+# Secrets and infrastructure keys
+ecr.pem
+*.pem
+
+# Sample rent rolls are customer data and never belong in the repo
+*.pdf
+*.xlsx
+
+# Node / Tailwind build output
 node_modules/
 .npm
 .npmrc
-
-# Tailwind
 static/css/style.css
 static/css/style.css.map
 
-# Python
-*.py[cod]
-__pycache__/
-__pycache__
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
->>>>>>> Stashed changes
-app.db
-flask_session/
-flask_session/
-flask_session/
-ecr.pem
-.env
+# macOS
+.DS_Store

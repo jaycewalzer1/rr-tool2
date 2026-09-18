@@ -1,97 +1,44 @@
-console.log('Subscription script loaded');
+// Plan selection. The server creates the Checkout Session and returns its URL,
+// so no Stripe.js bundle or publishable key is needed on this page.
 
-function initializeSubscription() {
-    if (window.stripeInitialized) return;
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.subscribe-btn').forEach(button => {
+        button.addEventListener('click', event => {
+            event.preventDefault();
+            startCheckout(button);
+        });
+    });
 
-    if (typeof Stripe !== 'function') {
-        console.log('Stripe not loaded yet, retrying...');
-        setTimeout(initializeSubscription, 100);
-        return;
+    if (new URLSearchParams(window.location.search).get('cancelled')) {
+        showFlashMessage('info', 'Checkout was cancelled.');
     }
+});
 
-    const stripePublicKey = document.querySelector('meta[name="stripe-public-key"]');
-    if (!stripePublicKey || !stripePublicKey.content) {
-        console.error('Stripe public key not found or empty');
-        return;
-    }
-
-    const stripe = Stripe(stripePublicKey.content);
-    window.stripeInitialized = true;
-    console.log('Stripe initialized with key:', stripePublicKey.content);
-
-    async function subscribe(planId) {
-    console.log('Subscribe called for plan:', planId);
-    const button = document.querySelector(`.plan-card[data-plan-id="${planId}"] .subscribe-btn`);
-    if (!button) {
-        console.error('Subscribe button not found for plan:', planId);
-        return;
-    }
-
+async function startCheckout(button) {
+    const originalLabel = button.textContent;
     button.disabled = true;
     button.textContent = 'Processing...';
 
     try {
-        const checkoutResponse = await fetch(`/create-checkout-session`, {
+        const response = await fetch('/create-checkout-session', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            credentials: 'include'
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin'
         });
 
-        const rawText = await checkoutResponse.text();
-        console.warn("⚠️ RAW RESPONSE:", rawText.slice(0, 300));
-
-        // ✅ Detect HTML login redirect
-        if (rawText.includes('<!DOCTYPE html') || rawText.toLowerCase().includes('<html')) {
-            console.warn('Received HTML, redirecting to login...');
+        // An expired session renders the login page instead of JSON.
+        if (!response.headers.get('content-type')?.includes('application/json')) {
             window.location.href = '/login';
             return;
         }
 
-        const contentType = checkoutResponse.headers.get('content-type') || '';
-        if (!contentType.includes('application/json')) {
-            throw new Error('Expected JSON but got non-JSON content');
-        }
+        const data = await response.json();
+        if (!response.ok || !data.url) throw new Error(data.error || 'Could not start checkout');
 
-        const data = JSON.parse(rawText);
-        if (!data.id) throw new Error('No checkout session ID returned');
-
-        console.log('Redirecting to Stripe checkout...');
-        stripe.redirectToCheckout({ sessionId: data.id });
-
+        window.location.href = data.url;
     } catch (error) {
-        console.error('Subscription error:', error);
-        button.textContent = 'Subscribe';
+        button.textContent = originalLabel;
         button.disabled = false;
-        alert(error.message || 'An error occurred during subscription.');
+        showFlashMessage('error', error.message || 'Could not start checkout');
     }
 }
-
-
-    const subscribeButtons = document.querySelectorAll('.subscribe-btn');
-    subscribeButtons.forEach(button => {
-        const planId = button.closest('.plan-card')?.dataset?.planId;
-        if (!planId) {
-            console.error('Plan ID not found for button:', button);
-            return;
-        }
-
-        button.addEventListener('click', async (e) => {
-            e.preventDefault();
-            console.log('Button clicked for plan:', planId);
-            await subscribe(planId);
-        });
-    });
-
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('cancelled')) {
-        alert('Subscription was cancelled.');
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Document loaded, initializing subscription');
-    initializeSubscription();
-});

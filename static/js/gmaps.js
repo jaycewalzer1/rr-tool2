@@ -1,13 +1,22 @@
 let map;
 let markers = [];
-const addressList = document.getElementById('address-list');
-const addresses = Array.from(addressList.querySelectorAll('li')).map(li => li.textContent);
-const popupList = document.getElementById('popup-list');
-const popups = Array.from(popupList.querySelectorAll('li')).map(li => li.textContent);
-const rentList = document.getElementById('rent-list');
-const rents = Array.from(rentList.querySelectorAll('li')).map(li => li.textContent);
+let points = [];
+
+// Parsed rows are delivered as JSON rather than pre-rendered HTML so that
+// spreadsheet content can never be executed as script in a marker popup.
+function loadPoints() {
+    const node = document.getElementById('map-points');
+    if (!node) return [];
+    try {
+        return JSON.parse(node.textContent) || [];
+    } catch (error) {
+        console.error('Could not parse map data:', error);
+        return [];
+    }
+}
 
 function initializeMap() {
+    points = loadPoints();
     map = new google.maps.Map(document.getElementById('map'), {
         zoom: 12,
         center: { lat: 35.9653, lng: -83.9233 }, // Charlotte, NC
@@ -104,12 +113,7 @@ function initializeMap() {
         map.setZoom(map.getZoom() - 1);
     });
 
-    for (var i = 0; i < addresses.length; i++){
-        if (addresses[i] && addresses[i] !== 'NaN') {
-            console.log(addresses[i]);
-            geocodeAddress(addresses[i], i);
-        }
-    }
+    points.forEach((point, index) => geocodeAddress(point.address, index));
 }
 
 function handleAddressSubmit(e) {
@@ -146,8 +150,8 @@ function geocodeAddress(address, idx) {
             map.setZoom(15);
             addMarker(newLoc, formatted, idx);
         } else {
-            alert('Geocoder failed: ' + status);
-            console.error('Geocoding error:', status);
+            // One unresolvable address should not block the rest of the map.
+            console.warn(`Could not geocode "${address}": ${status}`);
         }
     });
 }
@@ -171,17 +175,34 @@ function getMarkerColor(rent) {
     return `hsl(${hue}, 90%, 45%)`; // Using HSL for a color gradient
 }
 
-function addMarker(latLng, title, idx) {
-    const rentString = rents[idx];
-    let markerColor = '#9E9E9E'; // A neutral grey for properties without rent data
+// Builds the popup with DOM APIs; every value goes through textContent.
+function buildPopup(point) {
+    const card = document.createElement('div');
+    card.className = 'map-popup';
 
-    if (rentString) {
-        // Sanitize and parse the rent value
-        const rent = parseFloat(rentString.replace(/[^0-9.-]+/g, ""));
-        if (!isNaN(rent)) {
-            markerColor = getMarkerColor(rent);
-        }
-    }
+    (point.fields || []).forEach(([label, value]) => {
+        const row = document.createElement('div');
+        row.className = 'map-popup__row';
+
+        const key = document.createElement('strong');
+        key.textContent = `${label}:`;
+
+        const cell = document.createElement('span');
+        cell.textContent = value;
+
+        row.append(key, cell);
+        card.append(row);
+    });
+
+    return card;
+}
+
+function addMarker(latLng, title, idx) {
+    const point = points[idx] || {};
+    // Neutral grey for properties with no rent data to colour-scale against.
+    const markerColor = point.rent === null || point.rent === undefined
+        ? '#9E9E9E'
+        : getMarkerColor(point.rent);
 
     const marker = new google.maps.Marker({
         map,
@@ -200,7 +221,7 @@ function addMarker(latLng, title, idx) {
     markers.push(marker);
 
     const infowindow = new google.maps.InfoWindow({
-        content: popups[idx],
+        content: buildPopup(point),
     });
 
     marker.addListener('click', () => {

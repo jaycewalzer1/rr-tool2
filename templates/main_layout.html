@@ -5,11 +5,11 @@
         <header>
             <nav>
                 <div class="logo">
-                    <a class="headerlink logo-link" href="{{ url_for('misc.home') }}">CRE Data Solutions</a>
+                    <a class="headerlink logo-link" href="{{ url_for('marketing.home') }}">CRE Data Solutions</a>
                 </div>
                 <div class="nav-right">
-                    <a class="headerlink" href="{{ url_for('misc.platform') }}">Platform</a>
-                    <a class="headerlink" href="{{ url_for('misc.solutions') }}">Solutions</a>
+                    <a class="headerlink" href="{{ url_for('marketing.platform') }}">Platform</a>
+                    <a class="headerlink" href="{{ url_for('marketing.solutions') }}">Solutions</a>
                     <a class="headerlink" href="{{ url_for('auth.login') }}">Login</a>
                     <a class="headerlink" href="{{ url_for('auth.signup') }}">Sign Up</a>
                 </div>
@@ -28,9 +28,9 @@
         {% block footer %}
         <footer>
             <div class="footer-link">
-                <a class="footerlink" href="{{ url_for('misc.contact') }}">Contact Us</a>
-                <a class="footerlink" href="{{ url_for('misc.privacy') }}">Privacy Policy</a>
-                <a class="footerlink" href="{{ url_for('misc.terms') }}">Terms of Service</a>
+                <a class="footerlink" href="{{ url_for('marketing.contact') }}">Contact Us</a>
+                <a class="footerlink" href="{{ url_for('marketing.privacy') }}">Privacy Policy</a>
+                <a class="footerlink" href="{{ url_for('marketing.terms') }}">Terms of Service</a>
             </div>
         </footer>
         {% endblock %}

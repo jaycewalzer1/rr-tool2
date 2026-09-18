@@ -1,103 +1,85 @@
+"""View decorators enforcing authentication and account verification."""
+
+from __future__ import annotations
+
+import logging
+from collections.abc import Callable
 from functools import wraps
-from flask import session, redirect, flash, url_for
-from auth import cognito, COGNITO_APP_CLIENT_ID
-import os
+from typing import Any, TypeVar, cast
 
-COGNITO_REGION = os.getenv("AWS_REGION")
-COGNITO_USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID")
+from botocore.exceptions import ClientError
+from flask import flash, redirect, session, url_for
 
+import auth
 
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        # Check if we have the auth data
-        if 'auth' not in session:
-            flash('Please log in to access this page.', 'danger')
-            return redirect(url_for('auth.login'))
-        
-        # Check if we have the user data
-        if 'user' not in session:
-            flash('User session data is missing.', 'danger')
-            return redirect(url_for('auth.login'))
-        
-        # Check if we have essential tokens
-        if not all(key in session['auth'] for key in ['id_token', 'refresh_token', 'access_token']):
-            flash('Authentication data is missing.', 'danger')
-            return redirect(url_for('auth.login'))
-        
-        # Check if we have essential user info
-        if not all(key in session['user'] for key in ['email', 'username', 'user_id']):
-            flash('User data is missing.', 'danger')
-            return redirect(url_for('auth.login'))
-        
-        return f(*args, **kwargs)
-    return decorated_function
+logger = logging.getLogger(__name__)
+
+F = TypeVar("F", bound=Callable[..., Any])
+
+REQUIRED_TOKENS = ("access_token", "refresh_token", "id_token")
+REQUIRED_USER_FIELDS = ("email", "username", "user_id")
 
 
-def verify_account(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        try:
-            # First check if we have all required session data
-            if not login_required(f)(*args, **kwargs):
-                return redirect(url_for('auth.login'))
-            
-            # Try to get user info with current access token
-            try:
-                response = cognito.get_user(
-                    AccessToken=session['auth']['access_token']
-                )
-                user_data = {attr['Name']: attr['Value'] for attr in response['UserAttributes']}
-                
-                # Check if user is verified
-                if 'email_verified' not in user_data or user_data['email_verified'] != 'true':
-                    flash('Please verify your email address before proceeding.', 'warning')
-                    return redirect(url_for('auth.confirm_signup'))
-                
-                return f(*args, **kwargs)
-            except cognito.exceptions.NotAuthorizedException:
-                # If access token is invalid, try to refresh it
-                try:
-                    # Get the username from the session
-                    username = session['user'].get('username')
-                    if not username:
-                        return redirect(url_for('auth.login'))
+def login_required(view: F) -> F:
+    """Redirect to the login page unless a complete session is present."""
 
-                    # Calculate secret hash
-                    secret_hash = get_secret_hash(username, COGNITO_APP_CLIENT_ID)
+    @wraps(view)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        if not _session_is_complete():
+            flash("Please log in to access this page.", "danger")
+            return redirect(url_for("auth.login"))
+        return view(*args, **kwargs)
 
-                    refresh_response = cognito.initiate_auth(
-                        ClientId=COGNITO_APP_CLIENT_ID,
-                        AuthFlow='REFRESH_TOKEN_AUTH',
-                        AuthParameters={
-                            'REFRESH_TOKEN': session['auth']['refresh_token'],
-                            'SECRET_HASH': secret_hash
-                        }
-                    )
-                    
-                    # Update session with new tokens using the new structure
-                    session['auth'] = {
-                        'id_token': refresh_response['AuthenticationResult']['IdToken'],
-                        'refresh_token': refresh_response['AuthenticationResult']['RefreshToken'],
-                        'access_token': refresh_response['AuthenticationResult']['AccessToken']
-                    }
+    return cast(F, wrapper)
 
-                    # Try to get user info again with new access token
-                    response = cognito.get_user(
-                        AccessToken=session['auth']['access_token']
-                    )
-                    user_data = {attr['Name']: attr['Value'] for attr in response['UserAttributes']}
-                    
-                    # Check if user is verified
-                    if 'email_verified' not in user_data or user_data['email_verified'] != 'true':
-                        flash('Please verify your email address before proceeding.', 'warning')
-                        return redirect(url_for('auth.confirm_signup'))
-                except Exception as refresh_error:
-                    print(f"Error refreshing token: {str(refresh_error)}")
-                    return redirect(url_for('auth.login'))
-            
-            return f(*args, **kwargs)
-        except Exception as e:
-            print(f"Error verifying account: {str(e)}")
-            return redirect(url_for('auth.login'))
-    return decorated_function
+
+def verify_account(view: F) -> F:
+    """Ensure the caller's Cognito email is verified, refreshing tokens if needed.
+
+    Must be applied *below* :func:`login_required` so the session is known to be
+    populated before Cognito is called.
+    """
+
+    @wraps(view)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        attributes = _attributes_with_refresh()
+        if attributes is None:
+            flash("Your session has expired. Please log in again.", "warning")
+            return redirect(url_for("auth.login"))
+
+        if attributes.get("email_verified") != "true":
+            flash("Please verify your email address before proceeding.", "warning")
+            return redirect(url_for("auth.confirm_signup"))
+
+        return view(*args, **kwargs)
+
+    return cast(F, wrapper)
+
+
+def _session_is_complete() -> bool:
+    tokens = session.get("auth") or {}
+    user = session.get("user") or {}
+    return all(key in tokens for key in REQUIRED_TOKENS) and all(
+        user.get(field) for field in REQUIRED_USER_FIELDS
+    )
+
+
+def _attributes_with_refresh() -> dict[str, str] | None:
+    """Read Cognito attributes, transparently refreshing an expired token."""
+    try:
+        return auth.user_attributes(session["auth"]["access_token"])
+    except ClientError as error:
+        if error.response["Error"]["Code"] != "NotAuthorizedException":
+            logger.exception("cognito lookup failed")
+            return None
+
+    tokens = auth.refresh(session["user"]["username"], session["auth"]["refresh_token"])
+    if tokens is None:
+        return None
+
+    session["auth"] = tokens
+    try:
+        return auth.user_attributes(tokens["access_token"])
+    except ClientError:
+        logger.exception("cognito lookup failed after refresh")
+        return None

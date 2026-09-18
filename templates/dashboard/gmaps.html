@@ -39,31 +39,11 @@
             <em>Loading...</em>
         </div>
     </div>    
-    {% if address_list %}
-        <ul id = "address-list" class="pdf-list" hidden>
-            {% for address in address_list %}
-                <li>{{ address }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-                <p>No Addresses were found.</p>
+    {% if not map_points %}
+        <p>No addresses were found. Upload a rent roll to populate the map.</p>
     {% endif %}
 
-    {% if popup_html %}
-        <ul id = "popup-list" class="pdf-list" hidden>
-            {% for popup in popup_html %}
-                <li>{{ popup }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-
-    {% if rent_list %}
-        <ul id = "rent-list" class="pdf-list" hidden>
-            {% for rent in rent_list %}
-                <li>{{ rent }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+    <script id="map-points" type="application/json">{{ map_points | tojson }}</script>
 
 {% endblock %}
 
@@ -71,6 +51,32 @@
     <style>
         .map-container {
             margin-top: 20px;
+        }
+
+        .map-popup {
+            font-family: 'Roboto', 'Arial', sans-serif;
+            font-size: 14px;
+            width: 300px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+
+        .map-popup__row {
+            display: table;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .map-popup__row strong {
+            display: table-cell;
+            width: 40%;
+            color: #555;
+        }
+
+        .map-popup__row span {
+            display: table-cell;
+            color: #777;
         }
 
         .search-container {

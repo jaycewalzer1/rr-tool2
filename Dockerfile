@@ -1,33 +1,38 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
-# Prevent .pyc files and force stdout logs
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
 
-# Install system dependencies including Tesseract
-RUN apt-get update && apt-get install -y \
+# Tesseract is the OCR engine pytesseract shells out to; without it the parser
+# fails at runtime rather than at build time.
+RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
-    libtesseract-dev \
-    libleptonica-dev \
-    poppler-utils \
-    && apt-get clean \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
 WORKDIR /app
 
-# Copy static assets (for better caching)
-COPY static/ ./static/
-
-# Install Python dependencies
+# Dependencies first so source edits do not invalidate the install layer.
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copy full app source
 COPY . .
 
-# Expose port
+# Run unprivileged: the OCR path shells out, so it should not do so as root.
+RUN useradd --create-home --uid 10001 appuser \
+    && chown -R appuser:appuser /app
+USER appuser
+
 EXPOSE 5000
 
-# Use Gunicorn in production
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app", "--timeout", "300", "--access-logfile", "-", "--error-logfile", "-", "--capture-output", "--log-level", "debug"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl --fail http://localhost:5000/healthz || exit 1
+
+# A single OCR request can occupy a worker for minutes, hence the long timeout.
+CMD ["gunicorn", "wsgi:app", \
+     "--bind", "0.0.0.0:5000", \
+     "--workers", "3", \
+     "--timeout", "300", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-"]
